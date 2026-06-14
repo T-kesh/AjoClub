@@ -6,6 +6,7 @@ dist
 artifacts
 cache
 typechain-types
-deployments
+# legacy hardhat-deploy folder (not ignition)
+packages/hardhat/deployments
 coverage
 coverage.json
