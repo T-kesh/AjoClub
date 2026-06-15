@@ -8,13 +8,30 @@ import { tokenLabel } from "@/lib/contract";
 import { MemberList } from "@/components/MemberList";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { ContributeButton } from "@/components/ContributeButton";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { wagmiConfig } from "@/lib/celo";
 
 const STATUS = ["Open", "Active", "Complete"];
 
 export default function ClubPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const clubId = BigInt(id);
+
+  // Safe BigInt parse — bad URL param shows error instead of crashing
+  let clubId: bigint;
+  try {
+    clubId = BigInt(id);
+  } catch {
+    return (
+      <main className="p-6 text-center">
+        <p className="text-red-500">Invalid club ID.</p>
+        <button onClick={() => router.push("/clubs")} className="mt-4 text-sm text-green-600 underline">
+          Browse clubs
+        </button>
+      </main>
+    );
+  }
+
   const { address } = useMiniPay();
 
   const { data: club, isLoading, refetch } = useGetClub(clubId);
@@ -44,18 +61,27 @@ export default function ClubPage() {
       startVerification(`/club/${id}`);
       return;
     }
-    await joinClub(clubId);
-    refetch();
+    try {
+      const hash = await joinClub(clubId);
+      await waitForTransactionReceipt(wagmiConfig, { hash });
+      refetch();
+    } catch {}
   }
 
   async function handleTrigger() {
-    await triggerPayout(clubId);
-    refetch();
+    try {
+      const hash = await triggerPayout(clubId);
+      await waitForTransactionReceipt(wagmiConfig, { hash });
+      refetch();
+    } catch {}
   }
 
   async function handleStart() {
-    await startClub(clubId);
-    refetch();
+    try {
+      const hash = await startClub(clubId);
+      await waitForTransactionReceipt(wagmiConfig, { hash });
+      refetch();
+    } catch {}
   }
 
   return (
@@ -88,12 +114,12 @@ export default function ClubPage() {
         </div>
       )}
 
-      {paid.length > 0 && (
+      {members.length > 0 && (
         <div className="mb-6">
           <h2 className="text-sm font-semibold text-gray-700 mb-2">Members</h2>
           <MemberList
             members={members}
-            paid={paid}
+            paid={paid.length > 0 ? paid : Array(members.length).fill(false)}
             currentRound={currentRound}
             userAddress={address}
           />
@@ -120,8 +146,16 @@ export default function ClubPage() {
               {isStarting ? "Starting…" : "Start Club"}
             </button>
           )}
+          {status === 0 && isMember && members.length < Number(maxMembers) && (
+            <p className="text-center text-sm text-gray-400">
+              Waiting for members ({members.length}/{maxMembers.toString()})
+            </p>
+          )}
           {status === 1 && isMember && !userHasPaid && (
             <ContributeButton clubId={clubId} />
+          )}
+          {status === 1 && isMember && userHasPaid && !allPaid && (
+            <p className="text-center text-sm text-gray-400">Waiting for other members to pay…</p>
           )}
           {status === 1 && allPaid && cycleEnded && (
             <button
@@ -131,6 +165,9 @@ export default function ClubPage() {
             >
               {isTriggering ? "Sending payout…" : "Trigger Payout"}
             </button>
+          )}
+          {status === 2 && (
+            <p className="text-center text-sm text-gray-400 py-2">This club has completed all rounds.</p>
           )}
         </div>
       </div>

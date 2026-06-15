@@ -1,18 +1,28 @@
 "use client";
 import Link from "next/link";
 import { useMiniPay } from "@/hooks/useMiniPay";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const { isMiniPay } = useMiniPay();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen p-6">
+        <div className="text-5xl mb-4">🫙</div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">AjoClub</h1>
+      </main>
+    );
+  }
 
   if (!isMiniPay) {
     return (
       <main className="flex flex-col items-center justify-center min-h-screen p-6 text-center">
         <div className="text-5xl mb-4">🫙</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">AjoClub</h1>
-        <p className="text-gray-500 mb-8 max-w-xs">
-          Trustless rotating savings circles on Celo
-        </p>
+        <p className="text-gray-500 mb-8 max-w-xs">Trustless rotating savings circles on Celo</p>
         <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5 max-w-sm w-full">
           <p className="text-sm text-yellow-800 font-medium">
             Open this link inside the MiniPay wallet browser to get started.

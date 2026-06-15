@@ -1,31 +1,27 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { formatUnits } from "viem";
-import { useGetClub } from "@/hooks/useAjoClub";
-import { useContribute } from "@/hooks/useAjoClub";
+import { useReadContract, useWriteContract } from "wagmi";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { wagmiConfig } from "@/lib/celo";
+import { useGetClub, useContribute } from "@/hooks/useAjoClub";
+import { useMiniPay } from "@/hooks/useMiniPay";
 import { AJO_CLUB_ADDRESS, tokenLabel } from "@/lib/contract";
 import { useState } from "react";
-import { useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 
-const ERC20_APPROVE_ABI = [
+const ERC20_ABI = [
   {
     name: "approve",
     type: "function",
     stateMutability: "nonpayable",
-    inputs: [
-      { name: "spender", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
+    inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }],
     outputs: [{ name: "", type: "bool" }],
   },
   {
     name: "allowance",
     type: "function",
     stateMutability: "view",
-    inputs: [
-      { name: "owner", type: "address" },
-      { name: "spender", type: "address" },
-    ],
+    inputs: [{ name: "owner", type: "address" }, { name: "spender", type: "address" }],
     outputs: [{ name: "", type: "uint256" }],
   },
 ] as const;
@@ -39,44 +35,48 @@ export default function ContributePage() {
 
   const { data: club, isLoading } = useGetClub(clubId);
   const { contribute, error: contributeError } = useContribute();
-
   const { writeContractAsync } = useWriteContract();
-  const [approveTxHash, setApproveTxHash] = useState<`0x${string}` | undefined>();
-  const { isLoading: isApproveConfirming } = useWaitForTransactionReceipt({ hash: approveTxHash });
+  const { address } = useMiniPay();
 
   const [step, setStep] = useState<Step>("idle");
   const [error, setError] = useState<string | null>(null);
+
+  // Read current allowance so we can skip approve if already sufficient
+  const { data: allowance } = useReadContract({
+    address: club?.[1] as `0x${string}` | undefined,
+    abi: ERC20_ABI,
+    functionName: "allowance",
+    args: address && club ? [address, AJO_CLUB_ADDRESS] : undefined,
+    query: { enabled: !!address && !!club },
+  });
 
   if (isLoading || !club) {
     return <main className="p-6 text-center text-gray-400">Loading…</main>;
   }
 
   const [name, token, contribution] = club;
+  const needsApprove = allowance === undefined || allowance < contribution;
 
   async function handlePay() {
     setError(null);
     try {
-      // Step 1 — ERC20 approve
-      setStep("approving");
-      const approveTx = await writeContractAsync({
-        address: token as `0x${string}`,
-        abi: ERC20_APPROVE_ABI,
-        functionName: "approve",
-        type: "legacy",
-        args: [AJO_CLUB_ADDRESS, contribution],
-      });
-      setApproveTxHash(approveTx);
-
-      // Wait for approval confirmation before contributing
-      // useWaitForTransactionReceipt handles this reactively, but for sequential
-      // flow in an async function we import waitForTransactionReceipt directly
-      const { waitForTransactionReceipt } = await import("@wagmi/core");
-      const { wagmiConfig } = await import("@/lib/celo");
-      await waitForTransactionReceipt(wagmiConfig, { hash: approveTx });
+      // Step 1 — ERC20 approve (skip if allowance already covers contribution)
+      if (needsApprove) {
+        setStep("approving");
+        const approveTx = await writeContractAsync({
+          address: token as `0x${string}`,
+          abi: ERC20_ABI,
+          functionName: "approve",
+          type: "legacy",
+          args: [AJO_CLUB_ADDRESS, contribution],
+        });
+        await waitForTransactionReceipt(wagmiConfig, { hash: approveTx });
+      }
 
       // Step 2 — contribute
       setStep("contributing");
-      await contribute(clubId);
+      const hash = await contribute(clubId);
+      await waitForTransactionReceipt(wagmiConfig, { hash });
       setStep("done");
     } catch (e) {
       setError((e as Error).message?.split("\n")[0] ?? "Transaction failed");
@@ -101,7 +101,6 @@ export default function ContributePage() {
   }
 
   const isBusy = step === "approving" || step === "contributing";
-
   const buttonLabel =
     step === "approving" ? "Approving spend…" :
     step === "contributing" ? "Sending contribution…" :
@@ -121,9 +120,11 @@ export default function ContributePage() {
         {formatUnits(contribution, 18)} {tokenLabel(token)}
       </div>
 
-      <p className="text-xs text-gray-400 mb-10 text-center">
-        This requires 2 wallet confirmations: approve spend, then send.
-      </p>
+      {needsApprove && (
+        <p className="text-xs text-gray-400 mb-10 text-center">
+          Requires 2 wallet confirmations: approve spend, then send.
+        </p>
+      )}
 
       {(error || contributeError) && (
         <p className="text-sm text-red-600 bg-red-50 rounded-xl p-3 mb-4 w-full text-center">
