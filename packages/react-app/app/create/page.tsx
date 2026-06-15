@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { parseUnits } from "viem";
+import { parseUnits, decodeEventLog } from "viem";
 import { useCreateClub } from "@/hooks/useAjoClub";
-import { SUPPORTED_TOKENS } from "@/lib/contract";
+import { SUPPORTED_TOKENS, AJO_CLUB_ABI } from "@/lib/contract";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { wagmiConfig } from "@/lib/celo";
 
 const CYCLE_OPTIONS = [
   { label: "7 days", value: 7 * 24 * 3600 },
@@ -13,7 +15,8 @@ const CYCLE_OPTIONS = [
 
 export default function CreateClubPage() {
   const router = useRouter();
-  const { createClub, isPending, isConfirming, isSuccess, error } = useCreateClub();
+  const { createClub, isPending, error } = useCreateClub();
+  const [isConfirming, setIsConfirming] = useState(false);
 
   const [name, setName] = useState("");
   const [token, setToken] = useState(Object.values(SUPPORTED_TOKENS)[0]);
@@ -31,12 +34,38 @@ export default function CreateClubPage() {
         BigInt(cycle),
         BigInt(Math.max(2, parseInt(maxMembers, 10) || 2))
       );
-      // Navigate after tx confirmed — clubId 0-based incrementing, read from event
-      router.push("/");
-    } catch (err) {
-      // error is surfaced via the hook's error state
+
+      setIsConfirming(true);
+      const receipt = await waitForTransactionReceipt(wagmiConfig, { hash });
+
+      // Decode ClubCreated event to get the new clubId
+      let clubId: bigint | undefined;
+      for (const log of receipt.logs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: AJO_CLUB_ABI,
+            eventName: "ClubCreated",
+            data: log.data,
+            topics: log.topics,
+          });
+          clubId = decoded.args.clubId;
+          break;
+        } catch {}
+      }
+
+      if (clubId !== undefined) {
+        router.push(`/club/${clubId}`);
+      } else {
+        router.push("/clubs");
+      }
+    } catch {
+      // error surfaced via hook
+    } finally {
+      setIsConfirming(false);
     }
   }
+
+  const busy = isPending || isConfirming;
 
   return (
     <main className="max-w-md mx-auto p-6">
@@ -73,9 +102,7 @@ export default function CreateClubPage() {
           <label className="block text-sm font-medium text-gray-700 mb-1">Contribution per Cycle</label>
           <input
             required
-            type="number"
-            min="0.01"
-            step="0.01"
+            inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="5.00"
@@ -126,7 +153,7 @@ export default function CreateClubPage() {
 
         <button
           type="submit"
-          disabled={isPending || isConfirming}
+          disabled={busy}
           className="w-full py-4 rounded-2xl bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold text-lg transition-colors shadow"
         >
           {isPending ? "Confirm in wallet…" : isConfirming ? "Creating…" : "Create Club"}
