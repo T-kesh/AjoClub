@@ -51,7 +51,7 @@ export default function ContributePage() {
   });
 
   if (isLoading || !club) {
-    return <main className="p-6 text-center text-gray-400">Loading…</main>;
+    return <main className="p-6 text-center text-gray-400 dark:text-gray-500">Loading…</main>;
   }
 
   const [name, token, contribution] = club;
@@ -108,26 +108,26 @@ export default function ContributePage() {
 
   return (
     <main className="max-w-md mx-auto p-6 flex flex-col items-center">
-      <button onClick={() => router.back()} className="self-start text-sm text-gray-500 mb-6 flex items-center gap-1">
+      <button onClick={() => router.back()} className="self-start text-sm text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-1">
         ← Back
       </button>
 
       <div className="text-4xl mb-4">🫙</div>
-      <h1 className="text-lg font-bold text-gray-900 mb-1">{name}</h1>
-      <p className="text-sm text-gray-500 mb-10">Your contribution this cycle</p>
+      <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-1">{name}</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-10">Your contribution this cycle</p>
 
-      <div className="text-4xl font-bold text-green-600 mb-4">
+      <div className="text-4xl font-bold text-green-600 dark:text-green-400 mb-4">
         {formatUnits(contribution, 18)} {tokenLabel(token)}
       </div>
 
       {needsApprove && (
-        <p className="text-xs text-gray-400 mb-10 text-center">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-10 text-center">
           Requires 2 wallet confirmations: approve spend, then send.
         </p>
       )}
 
       {(error || contributeError) && (
-        <p className="text-sm text-red-600 bg-red-50 rounded-xl p-3 mb-4 w-full text-center">
+        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl p-3 mb-4 w-full text-center">
           {error ?? (contributeError as Error).message?.split("\n")[0] ?? "Transaction failed"}
         </p>
       )}
