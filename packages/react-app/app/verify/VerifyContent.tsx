@@ -44,7 +44,7 @@ export default function VerifyContent() {
             <p className="text-xs text-gray-500 mt-0.5">Available on iOS and Android</p>
             <div className="flex gap-2 mt-2">
               <a
-                href="https://apps.apple.com/app/self-zk/id6478563925"
+                href="https://apps.apple.com/app/id6478563710"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs px-3 py-1.5 rounded-lg bg-black text-white font-medium"
@@ -52,7 +52,7 @@ export default function VerifyContent() {
                 App Store
               </a>
               <a
-                href="https://play.google.com/store/apps/details?id=com.joinself.app"
+                href="https://play.google.com/store/apps/details?id=com.proofofpassportapp"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-xs px-3 py-1.5 rounded-lg bg-black text-white font-medium"
