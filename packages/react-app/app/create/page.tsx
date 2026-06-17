@@ -6,6 +6,7 @@ import { useCreateClub } from "@/hooks/useAjoClub";
 import { SUPPORTED_TOKENS, AJO_CLUB_ABI } from "@/lib/contract";
 import { waitForTransactionReceipt } from "@wagmi/core";
 import { wagmiConfig } from "@/lib/celo";
+import { friendlyError } from "@/lib/errors";
 
 const CYCLE_OPTIONS = [
   { label: "7 days", value: 7 * 24 * 3600 },
@@ -17,8 +18,9 @@ const inputCls = "w-full border border-gray-300 dark:border-gray-600 rounded-xl 
 
 export default function CreateClubPage() {
   const router = useRouter();
-  const { createClub, isPending, error } = useCreateClub();
+  const { createClub, isPending, error: txError } = useCreateClub();
   const [isConfirming, setIsConfirming] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const [name, setName] = useState("");
   const [token, setToken] = useState(Object.values(SUPPORTED_TOKENS)[0]);
@@ -28,6 +30,23 @@ export default function CreateClubPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setValidationError(null);
+
+    // Client-side validation before touching the wallet
+    const parsed = parseFloat(amount);
+    if (!amount || isNaN(parsed) || parsed <= 0) {
+      setValidationError("Contribution must be greater than 0.");
+      return;
+    }
+    if (parsed < 0.01) {
+      setValidationError("Minimum contribution is 0.01.");
+      return;
+    }
+    if (parsed > 10000) {
+      setValidationError("Maximum contribution is 10,000 per cycle.");
+      return;
+    }
+
     try {
       const hash = await createClub(
         name,
@@ -52,6 +71,8 @@ export default function CreateClubPage() {
       setIsConfirming(false);
     }
   }
+
+  const displayError = validationError ?? (txError ? friendlyError(txError as Error) : null);
 
   const busy = isPending || isConfirming;
 
@@ -103,9 +124,9 @@ export default function CreateClubPage() {
           />
         </div>
 
-        {error && (
+        {displayError && (
           <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl p-3">
-            {(error as Error).message?.split("\n")[0] ?? "Transaction failed"}
+            {displayError}
           </p>
         )}
 

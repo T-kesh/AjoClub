@@ -7,6 +7,7 @@ import { wagmiConfig } from "@/lib/celo";
 import { useGetClub, useContribute } from "@/hooks/useAjoClub";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { AJO_CLUB_ADDRESS, tokenLabel } from "@/lib/contract";
+import { friendlyError } from "@/lib/errors";
 import { useState } from "react";
 
 const ERC20_ABI = [
@@ -79,7 +80,7 @@ export default function ContributePage() {
       await waitForTransactionReceipt(wagmiConfig, { hash });
       setStep("done");
     } catch (e) {
-      setError((e as Error).message?.split("\n")[0] ?? "Transaction failed");
+      setError(friendlyError(e as Error));
       setStep("idle");
     }
   }
@@ -128,7 +129,7 @@ export default function ContributePage() {
 
       {(error || contributeError) && (
         <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl p-3 mb-4 w-full text-center">
-          {error ?? (contributeError as Error).message?.split("\n")[0] ?? "Transaction failed"}
+          {error ?? (contributeError ? friendlyError(contributeError as Error) : "Transaction failed")}
         </p>
       )}
 
