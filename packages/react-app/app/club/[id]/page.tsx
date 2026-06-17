@@ -32,7 +32,7 @@ export default function ClubPage() {
     );
   }
 
-  const { address } = useMiniPay();
+  const { address, isMiniPay } = useMiniPay();
 
   const { data: club, isLoading, refetch } = useGetClub(clubId);
   const { data: paymentData } = useGetMemberPaymentStatus(clubId);
@@ -128,46 +128,54 @@ export default function ClubPage() {
 
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
         <div className="max-w-md mx-auto flex flex-col gap-2">
-          {status === 0 && !isMember && (
-            <button
-              onClick={handleJoin}
-              disabled={isJoining}
-              className="w-full py-3 rounded-2xl bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold text-lg transition-colors"
-            >
-              {isJoining ? "Joining…" : "Join Club"}
-            </button>
-          )}
-          {status === 0 && isMember && members.length === Number(maxMembers) && (
-            <button
-              onClick={handleStart}
-              disabled={isStarting}
-              className="w-full py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-lg transition-colors"
-            >
-              {isStarting ? "Starting…" : "Start Club"}
-            </button>
-          )}
-          {status === 0 && isMember && members.length < Number(maxMembers) && (
-            <p className="text-center text-sm text-gray-400">
-              Waiting for members ({members.length}/{maxMembers.toString()})
+          {!isMiniPay ? (
+            <p className="text-center text-xs text-gray-400 py-1">
+              Open in <span className="font-semibold text-gray-500">MiniPay</span> to join or contribute.
             </p>
-          )}
-          {status === 1 && isMember && !userHasPaid && (
-            <ContributeButton clubId={clubId} />
-          )}
-          {status === 1 && isMember && userHasPaid && !allPaid && (
-            <p className="text-center text-sm text-gray-400">Waiting for other members to pay…</p>
-          )}
-          {status === 1 && allPaid && cycleEnded && (
-            <button
-              onClick={handleTrigger}
-              disabled={isTriggering}
-              className="w-full py-3 rounded-2xl bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-semibold text-lg transition-colors"
-            >
-              {isTriggering ? "Sending payout…" : "Trigger Payout"}
-            </button>
-          )}
-          {status === 2 && (
-            <p className="text-center text-sm text-gray-400 py-2">This club has completed all rounds.</p>
+          ) : (
+            <>
+              {status === 0 && !isMember && (
+                <button
+                  onClick={handleJoin}
+                  disabled={isJoining}
+                  className="w-full py-3 rounded-2xl bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-semibold text-lg transition-colors"
+                >
+                  {isJoining ? "Joining…" : "Join Club"}
+                </button>
+              )}
+              {status === 0 && isMember && members.length === Number(maxMembers) && (
+                <button
+                  onClick={handleStart}
+                  disabled={isStarting}
+                  className="w-full py-3 rounded-2xl bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white font-semibold text-lg transition-colors"
+                >
+                  {isStarting ? "Starting…" : "Start Club"}
+                </button>
+              )}
+              {status === 0 && isMember && members.length < Number(maxMembers) && (
+                <p className="text-center text-sm text-gray-400">
+                  Waiting for members ({members.length}/{maxMembers.toString()})
+                </p>
+              )}
+              {status === 1 && isMember && !userHasPaid && (
+                <ContributeButton clubId={clubId} />
+              )}
+              {status === 1 && isMember && userHasPaid && !allPaid && (
+                <p className="text-center text-sm text-gray-400">Waiting for other members to pay…</p>
+              )}
+              {status === 1 && allPaid && cycleEnded && (
+                <button
+                  onClick={handleTrigger}
+                  disabled={isTriggering}
+                  className="w-full py-3 rounded-2xl bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-semibold text-lg transition-colors"
+                >
+                  {isTriggering ? "Sending payout…" : "Trigger Payout"}
+                </button>
+              )}
+              {status === 2 && (
+                <p className="text-center text-sm text-gray-400 py-2">This club has completed all rounds.</p>
+              )}
+            </>
           )}
         </div>
       </div>
