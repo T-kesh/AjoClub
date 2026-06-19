@@ -10,7 +10,7 @@ import {SelfStructs} from "@selfxyz/contracts/contracts/libraries/SelfStructs.so
 import {SelfUtils} from "@selfxyz/contracts/contracts/libraries/SelfUtils.sol";
 
 contract AjoClub is SelfVerificationRoot, Ownable {
-    enum ClubStatus { OPEN, ACTIVE, COMPLETE }
+    enum ClubStatus { OPEN, ACTIVE, COMPLETE, CANCELLED }
 
     struct Club {
         string name;
@@ -50,6 +50,8 @@ contract AjoClub is SelfVerificationRoot, Ownable {
     event ClubComplete(uint256 indexed clubId);
     event MemberVerified(address indexed member);
     event MemberDefaulted(uint256 indexed clubId, address indexed member, uint256 round);
+    event ClubCancelled(uint256 indexed clubId, address indexed cancelledBy);
+    event MemberLeft(uint256 indexed clubId, address indexed member);
 
     // Hub addresses
     address private constant HUB_CELO_MAINNET  = 0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF;
@@ -160,6 +162,50 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         c.status = ClubStatus.ACTIVE;
         c.cycleEnd = block.timestamp + c.cycleDuration;
         c.currentRound = 0;
+    }
+
+    function cancelClub(uint256 clubId) external {
+        Club storage c = clubs[clubId];
+        require(msg.sender == c.creator, "Not creator");
+        require(c.status == ClubStatus.OPEN, "Club not open");
+
+        c.status = ClubStatus.CANCELLED;
+
+        // Refund any contributions made by members
+        for (uint256 i = 0; i < c.members.length; i++) {
+            address member = c.members[i];
+            if (hasPaid[clubId][member]) {
+                hasPaid[clubId][member] = false;
+                require(IERC20(c.token).transfer(member, c.contribution), "Refund failed");
+            }
+        }
+
+        emit ClubCancelled(clubId, msg.sender);
+    }
+
+    function leaveClub(uint256 clubId) external {
+        Club storage c = clubs[clubId];
+        require(c.status == ClubStatus.OPEN, "Club not open");
+        require(isMember[clubId][msg.sender], "Not a member");
+
+        // Refund if they contributed
+        if (hasPaid[clubId][msg.sender]) {
+            hasPaid[clubId][msg.sender] = false;
+            require(IERC20(c.token).transfer(msg.sender, c.contribution), "Refund failed");
+        }
+
+        // Remove from members array
+        for (uint256 i = 0; i < c.members.length; i++) {
+            if (c.members[i] == msg.sender) {
+                c.members[i] = c.members[c.members.length - 1];
+                c.members.pop();
+                break;
+            }
+        }
+
+        isMember[clubId][msg.sender] = false;
+
+        emit MemberLeft(clubId, msg.sender);
     }
 
     // ── Cycle mechanics ────────────────────────────────────────────────────────
