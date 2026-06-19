@@ -13,6 +13,7 @@ describe("AjoClub", function () {
 
   const CONTRIBUTION = ethers.parseUnits("5", 18);
   const CYCLE = 7 * 24 * 3600; // 7 days
+  const GRACE_PERIOD = 24 * 3600; // 24 hours
 
   beforeEach(async () => {
     [owner, alice, bob, carol] = await ethers.getSigners();
@@ -35,7 +36,7 @@ describe("AjoClub", function () {
   });
 
   async function setupOpenClub() {
-    await ajoClub.connect(owner).createClub("TestClub", await cUSD.getAddress(), CONTRIBUTION, CYCLE, 3);
+    await ajoClub.connect(owner).createClub("TestClub", await cUSD.getAddress(), CONTRIBUTION, CYCLE, GRACE_PERIOD, 3);
     return 0n; // clubId 0
   }
 
@@ -46,20 +47,26 @@ describe("AjoClub", function () {
 
   describe("createClub", () => {
     it("creates a club and emits ClubCreated", async () => {
-      const tx = await ajoClub.connect(owner).createClub("TestClub", await cUSD.getAddress(), CONTRIBUTION, CYCLE, 3);
+      const tx = await ajoClub.connect(owner).createClub("TestClub", await cUSD.getAddress(), CONTRIBUTION, CYCLE, GRACE_PERIOD, 3);
       await expect(tx).to.emit(ajoClub, "ClubCreated").withArgs(0n, owner.address, "TestClub", await cUSD.getAddress(), CONTRIBUTION);
     });
 
     it("reverts for disallowed token", async () => {
       await expect(
-        ajoClub.connect(owner).createClub("Bad", ethers.ZeroAddress, CONTRIBUTION, CYCLE, 3)
+        ajoClub.connect(owner).createClub("Bad", ethers.ZeroAddress, CONTRIBUTION, CYCLE, GRACE_PERIOD, 3)
       ).to.be.revertedWith("Token not allowed");
     });
 
     it("reverts for maxMembers < 2", async () => {
       await expect(
-        ajoClub.connect(owner).createClub("Bad", await cUSD.getAddress(), CONTRIBUTION, CYCLE, 1)
+        ajoClub.connect(owner).createClub("Bad", await cUSD.getAddress(), CONTRIBUTION, CYCLE, GRACE_PERIOD, 1)
       ).to.be.revertedWith("Need at least 2 members");
+    });
+
+    it("reverts for gracePeriod = 0", async () => {
+      await expect(
+        ajoClub.connect(owner).createClub("Bad", await cUSD.getAddress(), CONTRIBUTION, CYCLE, 0, 3)
+      ).to.be.revertedWith("Grace period must be > 0");
     });
   });
 
@@ -190,6 +197,94 @@ describe("AjoClub", function () {
 
       const club = await ajoClub.getClub(clubId);
       expect(club.status).to.equal(2); // COMPLETE
+    });
+  });
+
+  describe("Missed payment handling", () => {
+    it("member defaults, grace period passes, markDefaulted called, payout triggers with reduced pot", async () => {
+      const clubId = await setupOpenClub();
+      await verifyAndJoin(clubId, alice);
+      await verifyAndJoin(clubId, bob);
+      await verifyAndJoin(clubId, carol);
+      await ajoClub.connect(owner).startClub(clubId);
+
+      // Only alice and bob pay, carol defaults
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+
+      // Advance past cycle end
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Before grace period: triggerPayout should revert
+      await expect(ajoClub.triggerPayout(clubId)).to.be.revertedWith("Not all members paid");
+
+      // Advance past grace period
+      await ethers.provider.send("evm_increaseTime", [GRACE_PERIOD + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Mark carol as defaulted
+      await expect(ajoClub.markDefaulted(clubId))
+        .to.emit(ajoClub, "MemberDefaulted")
+        .withArgs(clubId, carol.address, 0n);
+
+      // Verify carol is marked as defaulted
+      const defaulted = await ajoClub.getDefaultedMembers(clubId, 0n);
+      expect(defaulted).to.have.lengthOf(1);
+      expect(defaulted[0]).to.equal(carol.address);
+
+      // Now triggerPayout should work with reduced pot (2 members paid instead of 3)
+      const recipient = alice.address; // round 0 → members[0] = alice
+      const balBefore = await cUSD.balanceOf(recipient);
+      await expect(ajoClub.triggerPayout(clubId))
+        .to.emit(ajoClub, "PayoutSent")
+        .withArgs(clubId, recipient, CONTRIBUTION * 2n, 0n); // 2 members paid
+      const balAfter = await cUSD.balanceOf(recipient);
+      expect(balAfter - balBefore).to.equal(CONTRIBUTION * 2n);
+    });
+
+    it("member defaults but grace period hasn't passed — triggerPayout reverts", async () => {
+      const clubId = await setupOpenClub();
+      await verifyAndJoin(clubId, alice);
+      await verifyAndJoin(clubId, bob);
+      await verifyAndJoin(clubId, carol);
+      await ajoClub.connect(owner).startClub(clubId);
+
+      // Only alice pays
+      await ajoClub.connect(alice).contribute(clubId);
+
+      // Advance past cycle end but not grace period
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      // triggerPayout should revert since not all members paid and grace period hasn't passed
+      await expect(ajoClub.triggerPayout(clubId)).to.be.revertedWith("Not all members paid");
+    });
+
+    it("all members pay — behavior unchanged (regression check)", async () => {
+      const clubId = await setupOpenClub();
+      await verifyAndJoin(clubId, alice);
+      await verifyAndJoin(clubId, bob);
+      await verifyAndJoin(clubId, carol);
+      await ajoClub.connect(owner).startClub(clubId);
+
+      // All members pay
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+      await ajoClub.connect(carol).contribute(clubId);
+
+      // Advance past cycle end
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      // triggerPayout should work with full pot
+      const recipient = alice.address; // round 0 → members[0] = alice
+      const balBefore = await cUSD.balanceOf(recipient);
+      await expect(ajoClub.triggerPayout(clubId))
+        .to.emit(ajoClub, "PayoutSent")
+        .withArgs(clubId, recipient, CONTRIBUTION * 3n, 0n); // 3 members paid
+      const balAfter = await cUSD.balanceOf(recipient);
+      expect(balAfter - balBefore).to.equal(CONTRIBUTION * 3n);
     });
   });
 });

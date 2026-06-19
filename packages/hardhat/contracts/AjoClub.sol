@@ -17,6 +17,7 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         address token;
         uint256 contribution;
         uint256 cycleDuration;
+        uint256 gracePeriod;
         uint256 maxMembers;
         uint256 currentRound;
         uint256 cycleEnd;
@@ -30,6 +31,7 @@ contract AjoClub is SelfVerificationRoot, Ownable {
     mapping(uint256 => Club) private clubs;
     mapping(uint256 => mapping(address => bool)) public hasPaid;
     mapping(uint256 => mapping(address => bool)) public isMember;
+    mapping(uint256 => mapping(uint256 => mapping(address => bool))) public hasDefaulted;
 
     // Global Self Protocol verification (once per address, valid for all clubs)
     mapping(address => bool) public isVerified;
@@ -47,6 +49,7 @@ contract AjoClub is SelfVerificationRoot, Ownable {
     event PayoutSent(uint256 indexed clubId, address indexed recipient, uint256 amount, uint256 round);
     event ClubComplete(uint256 indexed clubId);
     event MemberVerified(address indexed member);
+    event MemberDefaulted(uint256 indexed clubId, address indexed member, uint256 round);
 
     // Hub addresses
     address private constant HUB_CELO_MAINNET  = 0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF;
@@ -111,11 +114,13 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         address token,
         uint256 contribution,
         uint256 cycleDuration,
+        uint256 gracePeriod,
         uint256 maxMembers
     ) external returns (uint256 clubId) {
         require(allowedTokens[token], "Token not allowed");
         require(contribution > 0, "Contribution must be > 0");
         require(cycleDuration > 0, "Cycle duration must be > 0");
+        require(gracePeriod > 0, "Grace period must be > 0");
         require(maxMembers >= 2, "Need at least 2 members");
 
         clubId = clubCount++;
@@ -125,6 +130,7 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         c.token = token;
         c.contribution = contribution;
         c.cycleDuration = cycleDuration;
+        c.gracePeriod = gracePeriod;
         c.maxMembers = maxMembers;
         c.status = ClubStatus.OPEN;
         c.creator = msg.sender;
@@ -179,12 +185,24 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         require(c.status == ClubStatus.ACTIVE, "Club not active");
         require(block.timestamp >= c.cycleEnd, "Cycle not ended");
 
-        for (uint256 i = 0; i < c.members.length; i++) {
-            require(hasPaid[clubId][c.members[i]], "Not all members paid");
+        // Before grace period: all members must have paid
+        if (block.timestamp < c.cycleEnd + c.gracePeriod) {
+            for (uint256 i = 0; i < c.members.length; i++) {
+                require(hasPaid[clubId][c.members[i]], "Not all members paid");
+            }
         }
 
+        // Calculate payout based on members who actually paid
+        uint256 payingMembers = 0;
+        for (uint256 i = 0; i < c.members.length; i++) {
+            if (hasPaid[clubId][c.members[i]]) {
+                payingMembers++;
+            }
+        }
+        require(payingMembers > 0, "No members paid");
+
         address recipient = c.members[c.currentRound];
-        uint256 payout = c.contribution * c.members.length;
+        uint256 payout = c.contribution * payingMembers;
 
         require(IERC20(c.token).transfer(recipient, payout), "Payout failed");
         emit PayoutSent(clubId, recipient, payout, c.currentRound);
@@ -209,6 +227,20 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         }
     }
 
+    function markDefaulted(uint256 clubId) external {
+        Club storage c = clubs[clubId];
+        require(c.status == ClubStatus.ACTIVE, "Club not active");
+        require(block.timestamp >= c.cycleEnd + c.gracePeriod, "Grace period not ended");
+
+        for (uint256 i = 0; i < c.members.length; i++) {
+            address member = c.members[i];
+            if (!hasPaid[clubId][member] && !hasDefaulted[clubId][c.currentRound][member]) {
+                hasDefaulted[clubId][c.currentRound][member] = true;
+                emit MemberDefaulted(clubId, member, c.currentRound);
+            }
+        }
+    }
+
     // ── Views ──────────────────────────────────────────────────────────────────
 
     function getClub(uint256 clubId) external view returns (
@@ -216,6 +248,7 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         address token,
         uint256 contribution,
         uint256 cycleDuration,
+        uint256 gracePeriod,
         uint256 maxMembers,
         uint256 currentRound,
         uint256 cycleEnd,
@@ -223,7 +256,7 @@ contract AjoClub is SelfVerificationRoot, Ownable {
         address[] memory members
     ) {
         Club storage c = clubs[clubId];
-        return (c.name, c.token, c.contribution, c.cycleDuration, c.maxMembers,
+        return (c.name, c.token, c.contribution, c.cycleDuration, c.gracePeriod, c.maxMembers,
                 c.currentRound, c.cycleEnd, c.status, c.members);
     }
 
@@ -238,6 +271,25 @@ contract AjoClub is SelfVerificationRoot, Ownable {
             paid[i] = hasPaid[clubId][c.members[i]];
         }
         return (c.members, paid);
+    }
+
+    function getDefaultedMembers(uint256 clubId, uint256 round) external view returns (
+        address[] memory defaulted
+    ) {
+        Club storage c = clubs[clubId];
+        uint256 count = 0;
+        for (uint256 i = 0; i < c.members.length; i++) {
+            if (hasDefaulted[clubId][round][c.members[i]]) {
+                count++;
+            }
+        }
+        defaulted = new address[](count);
+        uint256 idx = 0;
+        for (uint256 i = 0; i < c.members.length; i++) {
+            if (hasDefaulted[clubId][round][c.members[i]]) {
+                defaulted[idx++] = c.members[i];
+            }
+        }
     }
 
     function getActiveClubs() external view returns (uint256[] memory clubIds) {
