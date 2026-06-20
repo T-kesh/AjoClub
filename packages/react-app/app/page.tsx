@@ -2,11 +2,26 @@
 import Link from "next/link";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useEffect, useState } from "react";
+import { requestNotificationPermission } from "@/lib/notifications";
 
 export default function Home() {
   const { isMiniPay } = useMiniPay();
   const [mounted, setMounted] = useState(false);
+  const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (mounted && typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        setShowNotificationPrompt(true);
+      }
+    }
+  }, [mounted]);
+
+  const handleEnableNotifications = () => {
+    requestNotificationPermission();
+    setShowNotificationPrompt(false);
+  };
 
   if (!mounted) {
     return (
@@ -24,6 +39,26 @@ export default function Home() {
       <p className="text-gray-500 dark:text-gray-400 mb-10 text-center max-w-xs">
         Trustless rotating savings circles on Celo. Contribute each cycle, receive the full pot in your round.
       </p>
+
+      {showNotificationPrompt && (
+        <div className="rounded-2xl border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 p-4 mb-6 w-full max-w-xs">
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-3 font-medium">Enable payment reminders?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleEnableNotifications}
+              className="flex-1 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold transition-colors"
+            >
+              Enable
+            </button>
+            <button
+              onClick={() => setShowNotificationPrompt(false)}
+              className="flex-1 py-2 rounded-xl bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-700 text-blue-600 dark:text-blue-400 text-sm font-semibold hover:bg-blue-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 w-full max-w-xs">
         {isMiniPay ? (

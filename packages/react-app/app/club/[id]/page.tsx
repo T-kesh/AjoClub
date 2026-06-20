@@ -4,6 +4,7 @@ import { formatUnits } from "viem";
 import { useGetClub, useGetMemberPaymentStatus, useJoinClub, useTriggerPayout, useStartClub } from "@/hooks/useAjoClub";
 import { useMiniPay } from "@/hooks/useMiniPay";
 import { useSelfVerify } from "@/hooks/useSelfVerify";
+import { usePaymentReminder } from "@/hooks/usePaymentReminder";
 import { tokenLabel } from "@/lib/contract";
 import { MemberList } from "@/components/MemberList";
 import { CountdownTimer } from "@/components/CountdownTimer";
@@ -40,6 +41,7 @@ export default function ClubPage() {
   const { joinClub, isPending: isJoining } = useJoinClub();
   const { triggerPayout, isPending: isTriggering } = useTriggerPayout();
   const { startClub, isPending: isStarting } = useStartClub();
+  usePaymentReminder(clubId);
 
   if (isLoading || !club) {
     return <main className="p-6 text-center text-gray-400 dark:text-gray-500">Loading…</main>;
@@ -55,6 +57,11 @@ export default function ClubPage() {
   const allPaid = paid.length > 0 && paid.every(Boolean);
   const cycleEnded = Number(cycleEnd) > 0 && Date.now() / 1000 >= Number(cycleEnd);
   const potSize = contribution * BigInt(members.length);
+
+  // Calculate hours until cycle end for reminder banner
+  const now = Date.now() / 1000;
+  const hoursUntilEnd = Number(cycleEnd) > 0 ? (Number(cycleEnd) - now) / 3600 : 0;
+  const showReminderBanner = status === 1 && isMember && !userHasPaid && hoursUntilEnd > 0 && hoursUntilEnd <= 48;
 
   async function handleJoin() {
     if (!isVerified) {
@@ -98,6 +105,14 @@ export default function ClubPage() {
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
         {formatUnits(contribution, 18)} {tokenLabel(token)} · {members.length}/{maxMembers.toString()} members
       </p>
+
+      {showReminderBanner && (
+        <div className="rounded-2xl bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 p-4 mb-6">
+          <p className="text-sm text-yellow-700 dark:text-yellow-300">
+            ⏰ Your payment of {formatUnits(contribution, 18)} {tokenLabel(token)} is due in {Math.ceil(hoursUntilEnd)} hours
+          </p>
+        </div>
+      )}
 
       {status === 1 && (
         <div className="rounded-2xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4 mb-6 flex items-center justify-between">
