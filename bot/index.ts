@@ -1,0 +1,66 @@
+// ============================================================================
+// Layer 1: Telegram Bot Launcher (bot/index.ts)
+// Powered by grammY
+// ============================================================================
+
+import { Bot } from "grammy";
+import dotenv from "dotenv";
+import {
+  handleStart,
+  handleHelp,
+  handleStatus,
+  handleRemind,
+  handlePayout,
+  handleNaturalMessage,
+} from "./handlers/commands.js";
+import { handleApprovalCallbacks } from "./handlers/callbacks.js";
+
+dotenv.config();
+
+const token = process.env.TELEGRAM_BOT_TOKEN;
+
+export function createBot(): Bot | null {
+  if (!token || token.trim().length === 0) {
+    console.warn("⚠️ TELEGRAM_BOT_TOKEN is not set in .env. Bot is running in offline/dry-run mode.");
+    return null;
+  }
+
+  const bot = new Bot(token);
+
+  // Command handlers
+  bot.command("start", handleStart);
+  bot.command("help", handleHelp);
+  bot.command("status", handleStatus);
+  bot.command("remind", handleRemind);
+  bot.command("payout", handlePayout);
+
+  // Interactive inline button callbacks
+  bot.on("callback_query:data", handleApprovalCallbacks);
+
+  // Natural language chat with Agent Core
+  bot.on("message:text", handleNaturalMessage);
+
+  return bot;
+}
+
+export async function startBot(): Promise<void> {
+  const bot = createBot();
+  if (!bot) {
+    console.log("ℹ️ To activate live Telegram polling, add TELEGRAM_BOT_TOKEN to your .env file.");
+    return;
+  }
+
+  console.log("🤖 AjoClub Telegram Bot is starting...");
+  await bot.start({
+    onStart: (info) => {
+      console.log(`✅ Bot @${info.username} is live and listening on Telegram!`);
+    },
+  });
+}
+
+// Auto-run if executed directly via CLI
+if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}` || process.argv[1]?.endsWith("index.ts")) {
+  startBot().catch((err) => {
+    console.error("❌ Failed to start bot:", err);
+  });
+}
