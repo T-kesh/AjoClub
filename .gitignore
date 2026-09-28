@@ -1,12 +1,43 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Environment Variables
 .env
 .env.local
-.next
-dist
-artifacts
-cache
-typechain-types
-# legacy hardhat-deploy folder (not ignition)
-packages/hardhat/deployments
-coverage
-coverage.json
+.env.*.local
+
+# Next.js Build
+.next/
+out/
+build/
+dist/
+
+# Hardhat Build Artifacts
+artifacts/
+cache/
+typechain-types/
+ignition/deployments/*/build-info/
+ignition/deployments/*/journal.jsonl
+packages/hardhat/deployments/
+
+# SQLite Database Files
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Testing & Coverage
+coverage/
+coverage.json/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
