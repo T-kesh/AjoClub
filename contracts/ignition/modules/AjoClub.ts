@@ -1,9 +1,11 @@
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const HUB: Record<string, string> = {
-  "base-sepolia": "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74",
+  // Base networks use zero address if Self Protocol hub is not deployed
+  baseSepolia:    "0x0000000000000000000000000000000000000000",
+  "base-sepolia": "0x0000000000000000000000000000000000000000",
   base:           "0x6758c0c2a297e6878bB9294916aFd2D099232977",
-  // Fallbacks
+  // Legacy Celo
   "celo-sepolia": "0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74",
   celo:           "0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF",
 };
