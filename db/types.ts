@@ -80,6 +80,7 @@ export interface ApprovalRequestRow {
   expires_at: number;
   created_at: number;
   resolved_at: number | null;
+  consumed_at?: number | null;
 }
 
 export interface AuditLogRow {

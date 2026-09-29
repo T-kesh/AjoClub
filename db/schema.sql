@@ -93,7 +93,8 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     telegram_message_id TEXT,
     expires_at INTEGER NOT NULL,
     created_at INTEGER NOT NULL,
-    resolved_at INTEGER
+    resolved_at INTEGER,
+    consumed_at INTEGER                      -- UNIX timestamp (seconds) when consumed/used for payout
 );
 
 CREATE INDEX IF NOT EXISTS idx_approvals_status ON approval_requests(status);

@@ -13,6 +13,13 @@ export const sendReminderSchema = z.object({
   customNote: z.string().optional().describe("Optional personalized context or polite encouragement from the agent"),
 });
 
+export type ReminderDispatcher = (telegramUserId: string, message: string) => Promise<boolean>;
+let reminderDispatcher: ReminderDispatcher | null = null;
+
+export function registerReminderDispatcher(dispatcher: ReminderDispatcher): void {
+  reminderDispatcher = dispatcher;
+}
+
 export type SendReminderInput = z.infer<typeof sendReminderSchema>;
 
 export async function sendReminder(input: SendReminderInput) {
@@ -89,7 +96,14 @@ export async function sendReminder(input: SendReminderInput) {
   // 4. Record Reminder in DB (Prevents spamming)
   remindersRepo.record(circleId, circle.current_round, normalizedWallet, reminderType, member.telegram_user_id || undefined);
 
-  // 5. Audit Log
+  // 5. Dispatch Telegram DM if dispatcher registered and member is linked
+  if (member.telegram_user_id && reminderDispatcher) {
+    reminderDispatcher(member.telegram_user_id, messageText).catch((err) => {
+      console.warn(`[send_reminder] Dispatcher delivery failed for ${member.telegram_user_id}:`, err);
+    });
+  }
+
+  // 6. Audit Log
   GuardrailEngine.audit(
     "TOOL_CALL",
     "agent_llm",
@@ -116,3 +130,4 @@ export async function sendReminder(input: SendReminderInput) {
     },
   };
 }
+

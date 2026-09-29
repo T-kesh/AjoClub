@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { z } from "zod";
-import { circlesRepo, membersRepo, payoutsRepo, db } from "../../db/index.js";
+import { circlesRepo, membersRepo, payoutsRepo, approvalsRepo, db } from "../../db/index.js";
 import { GuardrailEngine } from "../guardrails/index.js";
 import { triggerOnchainPayout } from "../chain.js";
 
@@ -63,27 +63,32 @@ export async function executePayout(input: ExecutePayoutInput) {
   const contractId = circle.contract_circle_id ?? circle.id;
   const onchainResult = await triggerOnchainPayout(contractId);
 
-  // 3. Update Database State
-  // Mark payout executed
-  const pendingPayout = db.get<{ id: number }>(
-    `SELECT id FROM payouts WHERE circle_id = ? AND round = ? AND status IN ('PROPOSED', 'APPROVED') ORDER BY id DESC LIMIT 1`,
-    [circleId, round]
-  );
-  if (pendingPayout) {
-    payoutsRepo.markExecuted(pendingPayout.id, onchainResult.txHash);
-  }
-
-  // Check if this was the final round
+  // 3. Update Database State (Atomic Transaction)
   const isFinalRound = round + 1 >= members.length;
-  if (isFinalRound) {
-    circlesRepo.updateStatus(circleId, "COMPLETE");
-  } else {
-    // Advance to next round and reset member payment status
-    const nextRound = round + 1;
-    const nextCycleEnd = Math.floor(Date.now() / 1000) + circle.cycle_duration_seconds;
-    circlesRepo.updateCycle(circleId, nextRound, nextCycleEnd);
-    membersRepo.resetRoundPaymentStatus(circleId);
-  }
+  db.transaction(() => {
+    // Mark payout executed
+    const pendingPayout = db.get<{ id: number }>(
+      `SELECT id FROM payouts WHERE circle_id = ? AND round = ? AND status IN ('PROPOSED', 'APPROVED') ORDER BY id DESC LIMIT 1`,
+      [circleId, round]
+    );
+    if (pendingPayout) {
+      payoutsRepo.markExecuted(pendingPayout.id, onchainResult.txHash);
+    }
+
+    // Atomically mark approval as consumed (single-use gate enforcement)
+    approvalsRepo.markConsumed(approvalId);
+
+    // Check if this was the final round
+    if (isFinalRound) {
+      circlesRepo.updateStatus(circleId, "COMPLETE");
+    } else {
+      // Advance to next round and reset member payment status
+      const nextRound = round + 1;
+      const nextCycleEnd = Math.floor(Date.now() / 1000) + circle.cycle_duration_seconds;
+      circlesRepo.updateCycle(circleId, nextRound, nextCycleEnd);
+      membersRepo.resetRoundPaymentStatus(circleId);
+    }
+  });
 
   // 4. Audit Log
   GuardrailEngine.audit(

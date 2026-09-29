@@ -146,6 +146,10 @@ export function verifyApprovalForExecution(
     return { authorized: false, reason: `Approval request '${approvalId}' is not approved (status: ${approval.status}).` };
   }
 
+  if (approval.consumed_at !== null && approval.consumed_at !== undefined) {
+    return { authorized: false, reason: `Approval request '${approvalId}' has already been consumed.` };
+  }
+
   const now = Math.floor(Date.now() / 1000);
   if (now > approval.expires_at) {
     return { authorized: false, reason: `Approval request '${approvalId}' has expired.` };
