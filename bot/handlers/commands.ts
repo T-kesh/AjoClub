@@ -301,7 +301,8 @@ export async function handleNaturalMessage(ctx: Context): Promise<void> {
   await ctx.replyWithChatAction("typing");
 
   try {
-    const { response } = await coordinator.handleMessage(messageText);
+    const sessionId = String(ctx.chat?.id || ctx.from?.id || "default");
+    const { response } = await coordinator.handleMessage(messageText, undefined, sessionId);
     await ctx.reply(response);
   } catch (err) {
     await ctx.reply(`⚠️ Error processing request: ${err instanceof Error ? err.message : String(err)}`);

@@ -11,6 +11,8 @@ import { GuardrailEngine } from "./guardrails/index.js";
 export class AgentCoordinator {
   private llm: LLMAdapter;
 
+  private sessionHistory: Map<string, LLMMessage[]> = new Map();
+
   constructor(llm?: LLMAdapter) {
     this.llm = llm || getLLMAdapter();
   }
@@ -19,20 +21,25 @@ export class AgentCoordinator {
    * Conversational reasoning loop:
    * Prompt -> LLM -> Tool Call -> Guardrail Engine -> Tool Output -> Natural Language Answer
    */
-  public async handleMessage(prompt: string, circleId?: number): Promise<{ response: string; toolResults: unknown[] }> {
+  public async handleMessage(prompt: string, circleId?: number, sessionId?: string): Promise<{ response: string; toolResults: unknown[] }> {
     const systemPrompt = `You are the autonomous AjoClub Circle Coordinator on Base.
 Your job is to assist members and organizers in managing rotating savings circles (Ajos/Chamas).
 You have access to tools for inspecting circle status, sending friendly payment reminders, proposing payouts, and gating executions.
 CRITICAL INVARIANT: You NEVER sign transactions directly. You only propose actions or call gated tools.
 Always be polite, encouraging, transparent, and concise.`;
 
+    const history = sessionId ? (this.sessionHistory.get(sessionId) || []) : [];
+
     const messages: LLMMessage[] = [
       { role: "system", content: systemPrompt },
+      ...history,
       { role: "user", content: circleId ? `[Context Circle #${circleId}] ${prompt}` : prompt },
     ];
 
     const toolResults: unknown[] = [];
     const firstResponse = await this.llm.chat(messages, TOOL_DEFINITIONS);
+
+    let finalResponseText = firstResponse.content;
 
     // If LLM decided to call tools
     if (firstResponse.toolCalls && firstResponse.toolCalls.length > 0) {
@@ -58,14 +65,20 @@ Always be polite, encouraging, transparent, and concise.`;
 
       // Ask LLM to synthesize final response from tool outputs
       const secondResponse = await this.llm.chat(messages);
-      return {
-        response: secondResponse.content || firstResponse.content,
-        toolResults,
-      };
+      finalResponseText = secondResponse.content || firstResponse.content;
+    }
+
+    if (sessionId) {
+      const updatedHistory: LLMMessage[] = [
+        ...history,
+        { role: "user", content: circleId ? `[Context Circle #${circleId}] ${prompt}` : prompt },
+        { role: "assistant", content: finalResponseText },
+      ].slice(-8);
+      this.sessionHistory.set(sessionId, updatedHistory);
     }
 
     return {
-      response: firstResponse.content,
+      response: finalResponseText,
       toolResults,
     };
   }
