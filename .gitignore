@@ -41,3 +41,7 @@ pnpm-debug.log*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Local Session Notes (Device Only)
+CONVERSATION_HISTORY.md
+*SESSION_HANDOFF*.md
