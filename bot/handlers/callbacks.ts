@@ -6,6 +6,7 @@
 import { Context } from "grammy";
 import { approvalsRepo } from "../../db/index.js";
 import { executeTool } from "../../agent/tools/index.js";
+import { GuardrailEngine } from "../../agent/guardrails/index.js";
 
 export async function handleApprovalCallbacks(ctx: Context): Promise<void> {
   const data = ctx.callbackQuery?.data;
@@ -33,10 +34,10 @@ export async function handleApprovalCallbacks(ctx: Context): Promise<void> {
   if (action === "approve") {
     await ctx.answerCallbackQuery({ text: "Processing approved payout on Base..." });
 
-    // 1. Resolve approval in SQLite
+    // 1. Resolve approval in SQLite as APPROVED
     approvalsRepo.resolve(approvalId, "APPROVED", reviewerId);
 
-    // 2. Execute gated payout tool
+    // 2. Execute gated payout tool (verified by GuardrailEngine for single-use consumed_at)
     const payload = JSON.parse(approval.payload);
     const result = await executeTool("execute_payout", {
       circleId: payload.circleId,
@@ -60,11 +61,30 @@ export async function handleApprovalCallbacks(ctx: Context): Promise<void> {
       );
     }
   } else if (action === "reject") {
+    // Resolve approval in SQLite as REJECTED (not recognized by guardrail engine)
     approvalsRepo.resolve(approvalId, "REJECTED", reviewerId);
+
+    // Record audit event for rejection
+    GuardrailEngine.audit(
+      "SECURITY_ALERT",
+      "organizer",
+      {
+        action: "reject_payout",
+        approvalId,
+        circleId: approval.circle_id,
+        reviewerId,
+        reason: "Organizer rejected payout request via Telegram inline button",
+      },
+      approval.circle_id,
+      "INFO"
+    );
+
     await ctx.answerCallbackQuery({ text: "Payout request rejected." });
     await ctx.editMessageText(
-      `❌ *Payout Request Rejected by Organizer.*`,
+      `❌ *Payout Request Rejected by Organizer.*\n\n` +
+      `The approval record was marked REJECTED. The guardrail engine will not authorize execution.`,
       { parse_mode: "Markdown" }
     );
   }
 }
+

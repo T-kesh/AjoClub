@@ -12,7 +12,7 @@ export class GeminiAdapter implements LLMAdapter {
   private apiKey: string;
   private baseUrl = "https://generativelanguage.googleapis.com/v1beta/models";
 
-  constructor(apiKey: string, model: string = "gemini-2.0-flash") {
+  constructor(apiKey: string, model: string = "gemini-3.5-flash") {
     this.apiKey = apiKey;
     this.model = model;
   }
@@ -27,7 +27,7 @@ export class GeminiAdapter implements LLMAdapter {
     const contents = conversation.map((msg) => {
       if (msg.role === "tool") {
         return {
-          role: "function",
+          role: "user",
           parts: [
             {
               functionResponse: {
@@ -36,6 +36,13 @@ export class GeminiAdapter implements LLMAdapter {
               },
             },
           ],
+        };
+      }
+
+      if (msg.rawParts && msg.rawParts.length > 0) {
+        return {
+          role: "model",
+          parts: msg.rawParts,
         };
       }
 
@@ -113,6 +120,7 @@ export class GeminiAdapter implements LLMAdapter {
     return {
       content: textContent,
       toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      rawParts: parts,
       provider: "Gemini",
       model: this.model,
     };

@@ -21,8 +21,8 @@ export function getLLMAdapter(): LLMAdapter {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
 
   if (geminiKey && geminiKey.trim().length > 0) {
-    console.log("🤖 LLM Provider: Google Gemini (gemini-2.0-flash)");
-    return new GeminiAdapter(geminiKey, "gemini-2.0-flash");
+    console.log("🤖 LLM Provider: Google Gemini (gemini-3.5-flash)");
+    return new GeminiAdapter(geminiKey, "gemini-3.5-flash");
   }
 
   if (anthropicKey && anthropicKey.trim().length > 0) {

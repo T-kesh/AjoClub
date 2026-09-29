@@ -40,6 +40,7 @@ Always be polite, encouraging, transparent, and concise.`;
         role: "assistant",
         content: firstResponse.content || "",
         toolCalls: firstResponse.toolCalls,
+        rawParts: firstResponse.rawParts,
       });
 
       for (const call of firstResponse.toolCalls) {

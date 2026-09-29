@@ -17,11 +17,13 @@ export interface LLMMessage {
   toolCallId?: string;
   name?: string;
   toolCalls?: ToolCall[];
+  rawParts?: any[];
 }
 
 export interface LLMResponse {
   content: string;
   toolCalls?: ToolCall[];
+  rawParts?: any[];
   provider: string;
   model: string;
 }

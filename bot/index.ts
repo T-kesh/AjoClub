@@ -9,15 +9,40 @@ import {
   handleStart,
   handleHelp,
   handleStatus,
+  handleCircles,
+  handleLink,
   handleRemind,
   handlePayout,
   handleNaturalMessage,
 } from "./handlers/commands.js";
 import { handleApprovalCallbacks } from "./handlers/callbacks.js";
+import { registerReminderDispatcher } from "../agent/tools/send_reminder.js";
 
 dotenv.config();
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
+
+let activeBot: Bot | null = null;
+
+export function getBot(): Bot | null {
+  return activeBot;
+}
+
+export async function sendTelegramDM(userId: string | number, message: string): Promise<boolean> {
+  const bot = getBot();
+  if (!bot) return false;
+  try {
+    await bot.api.sendMessage(userId, message, { parse_mode: "Markdown" });
+    return true;
+  } catch (err: any) {
+    console.warn(`⚠️ [Telegram DM] Could not deliver to user ${userId}: ${err.message}`);
+    return false;
+  }
+}
+
+// Hook dispatcher so agent loop and reminders send direct Telegram DMs
+registerReminderDispatcher(sendTelegramDM);
+
 
 export function createBot(): Bot | null {
   if (!token || token.trim().length === 0) {
@@ -26,11 +51,15 @@ export function createBot(): Bot | null {
   }
 
   const bot = new Bot(token);
+  activeBot = bot;
 
   // Command handlers
   bot.command("start", handleStart);
   bot.command("help", handleHelp);
   bot.command("status", handleStatus);
+  bot.command("circles", handleCircles);
+  bot.command("link", handleLink);
+  bot.command("register", handleLink); // Alias for link
   bot.command("remind", handleRemind);
   bot.command("payout", handlePayout);
 
@@ -64,3 +93,4 @@ if (import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}` || proc
     console.error("❌ Failed to start bot:", err);
   });
 }
+
