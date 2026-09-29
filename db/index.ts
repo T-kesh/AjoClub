@@ -69,6 +69,69 @@ export const circlesRepo = {
     return db.query<CircleRow>(`SELECT * FROM circles WHERE status = 'ACTIVE'`);
   },
 
+  getAll(): CircleRow[] {
+    return db.query<CircleRow>(`SELECT * FROM circles ORDER BY id ASC`);
+  },
+
+  getByName(name: string): CircleRow | undefined {
+    return db.get<CircleRow>(
+      `SELECT * FROM circles WHERE lower(name) = lower(?) OR lower(name) LIKE lower(?) LIMIT 1`,
+      [name, `%${name}%`]
+    );
+  },
+
+  getByMemberTelegramUserId(telegramUserId: string): { circle: CircleRow; member: MemberRow }[] {
+    return db.query<{ circle: CircleRow; member: MemberRow }>(
+      `SELECT 
+        c.id, c.contract_circle_id, c.contract_address, c.name, c.token_address, c.token_symbol,
+        c.token_decimals, c.contribution_amount, c.cycle_duration_seconds, c.grace_period_seconds,
+        c.max_members, c.current_round, c.cycle_end_timestamp, c.status, c.creator_address,
+        c.telegram_chat_id, c.created_at, c.updated_at,
+        m.id as member_id, m.wallet_address, m.basename, m.payout_order, m.has_paid_current_round,
+        m.total_contributed, m.total_received
+      FROM circles c
+      JOIN members m ON c.id = m.circle_id
+      WHERE m.telegram_user_id = ?
+      ORDER BY c.id ASC`,
+      [telegramUserId]
+    ).map((row: any) => ({
+      circle: {
+        id: row.id,
+        contract_circle_id: row.contract_circle_id,
+        contract_address: row.contract_address,
+        name: row.name,
+        token_address: row.token_address,
+        token_symbol: row.token_symbol,
+        token_decimals: row.token_decimals,
+        contribution_amount: row.contribution_amount,
+        cycle_duration_seconds: row.cycle_duration_seconds,
+        grace_period_seconds: row.grace_period_seconds,
+        max_members: row.max_members,
+        current_round: row.current_round,
+        cycle_end_timestamp: row.cycle_end_timestamp,
+        status: row.status,
+        creator_address: row.creator_address,
+        telegram_chat_id: row.telegram_chat_id,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+      },
+      member: {
+        id: row.member_id,
+        circle_id: row.id,
+        wallet_address: row.wallet_address,
+        basename: row.basename,
+        telegram_user_id: telegramUserId,
+        telegram_username: null,
+        payout_order: row.payout_order,
+        has_paid_current_round: row.has_paid_current_round,
+        total_contributed: row.total_contributed,
+        total_received: row.total_received,
+        status: "ACTIVE",
+        joined_at: 0,
+      },
+    }));
+  },
+
   updateStatus(id: number, status: CircleStatus): void {
     const now = Math.floor(Date.now() / 1000);
     db.run(`UPDATE circles SET status = ?, updated_at = ? WHERE id = ?`, [status, now, id]);
@@ -125,6 +188,71 @@ export const membersRepo = {
       `SELECT * FROM members WHERE circle_id = ? AND wallet_address = ?`,
       [circleId, wallet.toLowerCase()]
     );
+  },
+
+  getByWalletAcrossCircles(walletAddress: string): MemberRow[] {
+    return db.query<MemberRow>(
+      `SELECT * FROM members WHERE lower(wallet_address) = lower(?)`,
+      [walletAddress.toLowerCase()]
+    );
+  },
+
+  getByTelegramUserId(telegramUserId: string): MemberRow[] {
+    return db.query<MemberRow>(
+      `SELECT * FROM members WHERE telegram_user_id = ?`,
+      [telegramUserId]
+    );
+  },
+
+  linkTelegramUser(walletAddress: string, telegramUserId: string, telegramUsername?: string): number {
+    const result = db.run(
+      `UPDATE members SET telegram_user_id = ?, telegram_username = ? WHERE lower(wallet_address) = lower(?)`,
+      [telegramUserId, telegramUsername || null, walletAddress.toLowerCase()]
+    );
+    return Number(result.changes);
+  },
+
+  linkWallet(
+    walletAddress: string,
+    telegramUserId: string,
+    telegramUsername?: string
+  ): {
+    success: boolean;
+    error?: "NOT_A_MEMBER" | "ALREADY_LINKED_TO_OTHER";
+    message: string;
+    circlesLinked?: number;
+  } {
+    const normalized = walletAddress.toLowerCase();
+    const existing = this.getByWalletAcrossCircles(normalized);
+
+    // Rule 1: Wallet must exist as a member in at least one circle
+    if (existing.length === 0) {
+      return {
+        success: false,
+        error: "NOT_A_MEMBER",
+        message: `Address \`${walletAddress}\` is not enrolled in any circles. You must first be added as a circle member by an organizer before linking your Telegram account.`,
+      };
+    }
+
+    // Rule 2: Cannot overwrite a link claimed by a different Telegram user
+    const conflict = existing.find(
+      (m) => m.telegram_user_id && m.telegram_user_id !== telegramUserId
+    );
+    if (conflict) {
+      return {
+        success: false,
+        error: "ALREADY_LINKED_TO_OTHER",
+        message: `Address \`${walletAddress}\` is already linked to another Telegram account. Overwriting an existing member link is not permitted.`,
+      };
+    }
+
+    // Rule 3: Valid member - link across all circles where this wallet is enrolled
+    const updated = this.linkTelegramUser(normalized, telegramUserId, telegramUsername);
+    return {
+      success: true,
+      circlesLinked: updated,
+      message: `Successfully linked \`${walletAddress}\` across ${updated} circle(s).`,
+    };
   },
 
   markPaid(circleId: number, wallet: string, hasPaid: boolean): void {
@@ -239,6 +367,14 @@ export const approvalsRepo = {
     db.run(
       `UPDATE approval_requests SET status = ?, reviewer_telegram_id = ?, resolved_at = ? WHERE id = ?`,
       [status, reviewerTelegramId || null, now, id]
+    );
+  },
+
+  markConsumed(id: string): void {
+    const now = Math.floor(Date.now() / 1000);
+    db.run(
+      `UPDATE approval_requests SET consumed_at = ? WHERE id = ?`,
+      [now, id]
     );
   },
 };
