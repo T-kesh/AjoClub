@@ -304,8 +304,12 @@ export async function handleNaturalMessage(ctx: Context): Promise<void> {
     const sessionId = String(ctx.chat?.id || ctx.from?.id || "default");
     const { response } = await coordinator.handleMessage(messageText, undefined, sessionId);
     await ctx.reply(response);
-  } catch (err) {
-    await ctx.reply(`⚠️ Error processing request: ${err instanceof Error ? err.message : String(err)}`);
+  } catch (err: any) {
+    if (err?.message?.includes("503") || err?.message?.includes("high demand") || err?.message?.includes("UNAVAILABLE")) {
+      await ctx.reply("⏳ *Google Gemini is currently handling a temporary traffic spike.* Please wait a few seconds and ask again!", { parse_mode: "Markdown" });
+    } else {
+      await ctx.reply(`⚠️ Error processing request: ${err?.message || String(err)}`);
+    }
   }
 }
 

@@ -86,18 +86,40 @@ export class GeminiAdapter implements LLMAdapter {
       ];
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    const maxRetries = 3;
+    let data: any = null;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Gemini API Error [${response.status}]: ${errorText}`);
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          if ((response.status === 503 || response.status === 429) && attempt < maxRetries - 1) {
+            console.warn(`⚠️ [Gemini ${this.model}] Status ${response.status} on attempt ${attempt + 1}. Retrying in ${(attempt + 1) * 1.5}s...`);
+            await new Promise((res) => setTimeout(res, (attempt + 1) * 1500));
+            continue;
+          }
+          throw new Error(`Gemini API Error [${response.status}]: ${errorText}`);
+        }
+
+        data = await response.json();
+        break;
+      } catch (err: any) {
+        if (attempt === maxRetries - 1) {
+          throw err;
+        }
+        if (err.message?.includes("503") || err.message?.includes("429")) {
+          await new Promise((res) => setTimeout(res, (attempt + 1) * 1500));
+          continue;
+        }
+        throw err;
+      }
     }
-
-    const data = await response.json();
     const candidate = data.candidates?.[0];
     const parts = candidate?.content?.parts || [];
 
