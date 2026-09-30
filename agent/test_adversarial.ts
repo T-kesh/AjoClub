@@ -51,6 +51,9 @@ if (!process.env.DATABASE_PATH || !process.env.DATABASE_PATH.includes("test_adve
   process.exit(1);
 }
 
+// Explicitly declare simulation mode for offline/adversarial unit testing
+process.env.SIMULATE_CHAIN = "true";
+
 import { db } from "../db/client.js";
 import {
   circlesRepo,
