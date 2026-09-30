@@ -44,15 +44,19 @@ export async function handleApprovalCallbacks(ctx: Context): Promise<void> {
       round: payload.round,
       approvalId,
     });
-
     if (result.success) {
       const resData = result.data as any;
+      const explorerLine = resData.simulated
+        ? ""
+        : `• *Explorer:* [View on Basescan](https://sepolia.basescan.org/tx/${resData.txHash})\n`;
+
       await ctx.editMessageText(
         `✅ *Payout Approved & Broadcasted on Base!*\n\n` +
         `• *Recipient:* ${resData.recipient}\n` +
         `• *Transaction:* \`${resData.txHash}\` ${resData.simulated ? "(simulated)" : ""}\n` +
+        explorerLine +
         `• *Status:* ${resData.message}`,
-        { parse_mode: "Markdown" }
+        { parse_mode: "Markdown", link_preview_options: { is_disabled: true } }
       );
     } else {
       await ctx.editMessageText(
