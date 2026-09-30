@@ -81,7 +81,7 @@ function resolveAgentPrivateKey(): Hex | undefined {
   }
 
   try {
-    const req = createRequire(resolve(process.cwd(), "contracts"));
+    const req = createRequire(resolve(process.cwd(), "contracts", "package.json"));
     const { getVarsFilePath } = req("hardhat/internal/util/global-dir");
     const { VarsManager } = req("hardhat/internal/core/vars/vars-manager");
     const vm = new VarsManager(getVarsFilePath());
