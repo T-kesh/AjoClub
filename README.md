@@ -1,228 +1,255 @@
 # AjoClub 🫙
 
-> Onchain rotating savings clubs (Ajo/Esusu/Chama) for MiniPay — built on Celo.
+> Autonomous, AI-orchestrated Onchain Rotating Savings Circles (Ajo/Esusu/Chama) on Base.
 
-AjoClub lets communities create trustless savings circles where members contribute a fixed stablecoin amount each cycle and one member receives the full pot per round. No banker. No trust required. Round-robin payout enforced by smart contract.
+AjoClub modernizes informal rotating savings clubs (ROSCAs) by pairing trustless, non-custodial smart contracts with an autonomous AI Agent Coordinator on Telegram ([@Ajoclub_bot](https://t.me/Ajoclub_bot)).
 
-**Proof of Ship tracks:** MiniApps · Mento · Self Protocol
-
----
-
-## Live Deployment
-
-| | |
-|---|---|
-| **Contract (Celo mainnet)** | [`0x95cB4aA0b634D02E218B2ae2b85B464007c3457c`](https://celoscan.io/address/0x95cB4aA0b634D02E218B2ae2b85B464007c3457c) |
-| **Celoscan (verified)** | [View source + ABI](https://celoscan.io/address/0x95cB4aA0b634D02E218B2ae2b85B464007c3457c#code) |
-| **Frontend** | https://react-app-psi-ten-23.vercel.app |
-| **GitHub** | https://github.com/T-kesh/AjoClub |
+The smart contract enforces round-robin payouts and pot distribution without intermediaries. The AI Agent acts as an autonomous secretary: monitoring round timelines, calculating pots, sending personalized payment reminders to late contributors via direct messages, and preparing Human-in-the-Loop (HITL) payout proposals guarded by deterministic safety invariants.
 
 ---
 
-## Project Structure
+## 🚀 Live Deployments & Network Details
+
+### Base Sepolia (Testnet)
+
+| Component | Target / Value | Links |
+|:---|:---|:---|
+| **AjoClub Contract** | `0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3` | [Basescan (Verified)](https://sepolia.basescan.org/address/0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3#code) |
+| **Native USDC Token** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | [Basescan USDC](https://sepolia.basescan.org/address/0x036CbD53842c5426634e7929541eC2318f3dCF7e) |
+| **Agent Signer Wallet** | `0xBdE64B467969fC491674EE69f5C8cEA43fecA744` | [Basescan Address](https://sepolia.basescan.org/address/0xBdE64B467969fC491674EE69f5C8cEA43fecA744) |
+| **Telegram Coordinator** | `@Ajoclub_bot` | [Open in Telegram](https://t.me/Ajoclub_bot) |
+| **Chain ID** | `84532` (Base Sepolia) | [Base Docs](https://docs.base.org) |
+
+### Base Mainnet (Production Ready)
+
+| Parameter | Configuration |
+|:---|:---|
+| **Network** | Base Mainnet (`Chain ID: 8453`) |
+| **USDC Token** | `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913` |
+| **RPC** | `https://mainnet.base.org` |
+
+*(Legacy Celo mainnet deployment preserved at `0x95cB4aA0b634D02E218B2ae2b85B464007c3457c`)*
+
+---
+
+## 🏛️ 5-Layer Autonomous System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│     MEMBERS (Telegram)            ORGANIZER (Telegram / Web)    │
+└────────────────┬────────────────────────────────┬───────────────┘
+                 │ Commands & Chat                │ Approvals (/payout)
+                 ▼                                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 1: MESSAGING & INTERACTION (grammY Telegram Bot)         │
+│  • Natural language routing · Command handlers · Session memory │
+│  • Interactive approval cards with inline action keyboards      │
+└────────────────┬────────────────────────────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 2: AUTONOMOUS AGENT CORE (Google Gemini 3.5 Flash)       │
+│  • Proactive cycle tracking · Natural language query synthesis  │
+│  • Exponential backoff retry loop (503 / 429 resiliency)        │
+│  • Strict Invariant: LLM never holds keys or executes directly  │
+└────────────────┬────────────────────────────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 3: TYPE-SAFE TOOL REGISTRY (Zod Schema Validation)       │
+│  • get_circle_status · send_reminder · flag_default             │
+│  • propose_payout · execute_payout                              │
+└────────────────┬────────────────────────────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 4: DETERMINISTIC GUARDRAIL ENGINE (Pure TypeScript Code) │
+│  • Financial Caps: Min/max contribution & pot caps              │
+│  • Rotation Integrity: Strict round sequencing & timing checks  │
+│  • Single-Use HITL Approvals: Non-reusable approval records     │
+│  • Allowlist & Rate Limits: 20 req/min, token/contract checks   │
+│  • Tamper-Evident Audit Log: SQLite-backed audit trails         │
+└────────────────┬────────────────────────────────────────────────┘
+                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  Layer 5: BLOCKCHAIN INTEGRATION (viem + Base Sepolia)          │
+│  • AjoClub Smart Contract (0x872F...4b3) · USDC transfers       │
+│  • Autonomous Agent Signer via secure Hardhat vars storage      │
+│  • Fail-closed execution: Simulation allowed ONLY when explicit │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🤖 Telegram Bot Commands & Capabilities
+
+The bot coordinates circle activities directly in group chats or direct messages:
+
+| Command | Description | Example |
+|:---|:---|:---|
+| `/start` | Welcome guide, overview, and quick command reference. | `/start` |
+| `/circles` | Lists all circles you belong to or organize. | `/circles` |
+| `/status <id>` | Detailed circle status: current round, countdown, financials, and member roster. | `/status 1` |
+| `/link <wallet>` | Securely links your Telegram account to your Base wallet (protected by roster validation & takeover protection). | `/link 0xFD84...2F5` |
+| `/remind <id>` | Identifies unpaid members for the active round and dispatches friendly DM reminders. | `/remind 1` |
+| `/payout <id>` | Generates a Human-in-the-Loop approval card for organizers to review and trigger round payouts. | `/payout 1` |
+| `/help` | Security architecture, smart contract details, and safety invariants. | `/help` |
+| **Natural Language** | Conversational queries powered by Gemini 3.5 Flash with multi-turn memory. | *"How is circle 1 doing?"* or *"Who hasn't paid round 1?"* |
+
+---
+
+## 🛡️ Security Invariants & Guardrails
+
+1. **Secret Handling Invariant:**
+   * Private keys, API keys, and sensitive tokens are **never** logged, printed, or committed to version control.
+   * Agent execution keys are resolved securely from Hardhat vars (`BASE_SEPOLIA_AGENT_KEY`) or protected environment managers.
+2. **Fail-Closed Execution:**
+   * Mock transaction hashes are strictly disabled by default.
+   * Simulation is permitted **only** when `SIMULATE_CHAIN=true` is explicitly set for unit testing.
+   * If onchain credentials or contract addresses are missing in production mode, executions immediately fail with a descriptive error.
+3. **Single-Use Human-in-the-Loop (HITL) Approvals:**
+   * Payouts at or above the threshold require explicit organizer approval via Telegram inline keyboard buttons (`[ ✅ Approve Payout ]`).
+   * Each approval token is marked `consumed_at` atomically upon execution to prevent replay attacks.
+4. **Takeover Protection & Roster Verification:**
+   * `/link <walletAddress>` verifies that the address belongs to an existing circle roster.
+   * Addresses already linked to a different Telegram user ID are rejected to prevent identity hijacking.
+5. **Deterministic Financial Caps:**
+   * Hard limits on individual contributions (1 – 1,000 USDC) and total pot size (up to 10,000 USDC).
+   * Cycle durations must be at least 1 hour; grace periods capped at 14 days.
+
+---
+
+## 📂 Project Structure
 
 ```
 AjoClub/
-├── packages/
-│   ├── hardhat/                          # Smart contracts
-│   │   ├── contracts/
-│   │   │   ├── AjoClub.sol               # Core rotating savings contract
-│   │   │   └── test/                     # MockERC20, AjoClubTest helpers
-│   │   ├── ignition/modules/AjoClub.ts   # Hardhat Ignition deploy module
-│   │   ├── scripts/                      # checkConfigId, transferOwnership
-│   │   ├── test/AjoClub.test.ts          # Full test suite (15 tests)
-│   │   └── hardhat.config.ts
-│   └── react-app/                        # Next.js MiniPay frontend
-│       ├── app/
-│       │   ├── page.tsx                  # Home: Create Club / Browse Clubs CTAs
-│       │   ├── create/page.tsx           # Create club form
-│       │   ├── clubs/page.tsx            # Browse all clubs
-│       │   ├── club/[id]/page.tsx        # Club dashboard
-│       │   ├── club/[id]/contribute/     # One-tap contribute screen
-│       │   └── verify/page.tsx           # Self Protocol identity gate
-│       ├── components/
-│       │   ├── ChainGuard.tsx            # Wrong-network blocker
-│       │   ├── ClubCard.tsx              # Club summary card
-│       │   ├── MemberList.tsx            # Member list with payout order
-│       │   ├── ContributeButton.tsx      # Navigate to contribute page
-│       │   ├── CountdownTimer.tsx        # Live cycle-end countdown
-│       │   └── SelfVerifyButton.tsx      # Self Protocol QR widget
-│       ├── hooks/
-│       │   ├── useAjoClub.ts             # Contract read/write hooks
-│       │   ├── useMiniPay.ts             # MiniPay wallet detection + connect
-│       │   └── useSelfVerify.ts          # Self Protocol verification state
-│       └── lib/
-│           ├── contract.ts               # ABI + deployed address + token addresses
-│           ├── celo.ts                   # Wagmi config for Celo mainnet/Sepolia
-│           └── self.ts                   # Self Protocol app builder (per-user)
-├── CHANGELOG.md
-└── README.md
+├── agent/                          # Autonomous AI Agent Core
+│   ├── chain.ts                    # viem client, Base Sepolia signer & fail-closed execution
+│   ├── loop.ts                     # Coordinator loop, conversation memory & event reactor
+│   ├── guardrails/                 # Deterministic Layer 4 safety gates
+│   │   ├── allowlist.ts            # Token & contract target allowlists
+│   │   ├── approvals.ts            # HITL approval verification & single-use tracking
+│   │   ├── audit.ts                # Structured audit logging
+│   │   ├── caps.ts                 # Contribution and pot caps
+│   │   └── rate_limits.ts          # Tool rate limits & reminder deduplication
+│   ├── llm/                        # Multi-provider LLM adapters (Gemini 3.5 Flash, Anthropic, Mock)
+│   ├── tools/                      # Zod-validated tool contracts (status, reminder, payout, default)
+│   └── test_adversarial.ts         # 63 comprehensive adversarial security tests
+├── bot/                            # Layer 1 Telegram Bot (grammY)
+│   ├── handlers/                   # Command handlers, callbacks & message routing
+│   ├── templates/                  # Markdown status cards & interactive approval cards
+│   └── index.ts                    # Bot process entrypoint
+├── contracts/                      # Base Sepolia Smart Contracts (Hardhat)
+│   ├── src/
+│   │   └── AjoClub.sol             # Core rotating savings contract
+│   ├── scripts/
+│   │   ├── generateAgentWallet.ts  # Secure agent wallet generation utility
+│   │   └── proveContribute.ts      # End-to-end onchain contribution validation
+│   └── hardhat.config.ts           # Hardhat config with Base Sepolia network definition
+├── db/                             # SQLite Storage Layer
+│   ├── client.ts                   # Fast WAL-mode SQLite client
+│   ├── schema.sql                  # Relational schema (circles, members, approvals, audit logs)
+│   └── repositories/               # Repository pattern data access
+├── docs/                           # Specifications & threat modeling
+│   ├── spec.md                     # 5-Layer architecture specification
+│   ├── threat_model.md             # Threat vectors & guardrail mitigations
+│   └── demo_script.md              # Live demonstration walkthrough
+└── package.json
 ```
 
 ---
 
-## Smart Contract
+## 🛠️ Getting Started
 
-### Overview
+### Prerequisites
 
-Single contract manages multiple independent clubs. Each club is identified by an auto-incrementing `clubId`. Inherits `SelfVerificationRoot` from `@selfxyz/contracts` — Self Protocol's `IdentityVerificationHubV2` calls back into `customVerificationHook` after a valid ZK passport proof, marking the wallet address as verified globally.
+- Node.js (v20+ recommended)
+- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
+- Google Gemini API Key from Google AI Studio (or Anthropic API key)
+- Funded Base Sepolia wallet (for deployer and agent)
 
-### Self Protocol Integration
-
-The contract registers a `VerificationConfigV2` atomically in the constructor — no post-deploy setup needed. `verificationConfigId` is stored and returned by `getConfigId()` for every proof validation.
-
-```
-Hub (Celo mainnet): 0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF
-Scope seed: "ajo-club"
-verificationConfigId: 0x7b6436b0c98f62380866d9432c2af0ee08ce16a171bda6951aecd95ee1307d61
-```
-
-### Key Functions
-
-```solidity
-// Club lifecycle
-createClub(name, token, contribution, cycleDuration, maxMembers) → clubId
-joinClub(clubId)        // requires isVerified[msg.sender]
-startClub(clubId)       // creator only, club must be full
-
-// Cycle mechanics
-contribute(clubId)      // ERC20 transferFrom — approve first
-triggerPayout(clubId)   // anyone, after cycleEnd + allPaid
-
-// Self Protocol (called by IdentityVerificationHubV2)
-verifySelfProof(proofPayload, userContextData)
-customVerificationHook(output, userData)  // internal — marks wallet verified
-```
-
-### Supported Tokens (Mento stablecoins on Celo mainnet)
-
-```
-cUSD:  0x765DE816845861e75A25fCA122bb6898B8B1282a
-cEUR:  0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73
-cKES:  0x456a3D042C0DbD3db53D5489e98dFb038553B0d0
-```
-
----
-
-## Frontend
-
-### Stack
-
-- **Next.js 14** (App Router)
-- **wagmi v2 + viem** — all writes use `type: "legacy"` (MiniPay requirement)
-- **Tailwind CSS** — mobile-first
-- **Self Protocol SDK** — `@selfxyz/qrcode` for identity verification
-
-### MiniPay Notes
-
-- Detects MiniPay via `window.ethereum?.isMiniPay`
-- Auto-connects injected wallet on mount
-- All txs are legacy (no EIP-1559) — required by MiniPay
-- ERC20 approve reads existing allowance first, skips approve if already sufficient
-- Test locally with ngrok (`ngrok http 3000`)
-
----
-
-## Environment Variables
-
-### `packages/react-app/.env.local`
+### 1. Installation
 
 ```bash
-NEXT_PUBLIC_AJO_CLUB_ADDRESS=0x95cB4aA0b634D02E218B2ae2b85B464007c3457c
-NEXT_PUBLIC_CELO_RPC=https://forno.celo.org
-NEXT_PUBLIC_SELF_ENDPOINT=0x95cB4aA0b634D02E218B2ae2b85B464007c3457c
-NEXT_PUBLIC_CHAIN_ID=42220
+# Clone the repository
+git clone https://github.com/T-kesh/AjoClub.git
+cd AjoClub
+
+# Install root dependencies
+npm install
+
+# Install contract dependencies
+cd contracts && npm install && cd ..
 ```
 
-### `packages/hardhat/.env`
+### 2. Environment Configuration
+
+Create a `.env` file in the project root:
 
 ```bash
-PRIVATE_KEY=          # deployer wallet private key
-CELOSCAN_API_KEY=     # for contract verification
+# Telegram Bot
+TELEGRAM_BOT_TOKEN="your_telegram_bot_token"
+
+# LLM Providers (Gemini 3.5 Flash recommended)
+GEMINI_API_KEY="your_gemini_api_key"
+
+# Base Network & Contract
+BASE_CHAIN_ID=84532
+BASE_SEPOLIA_RPC_URL="https://sepolia.base.org"
+AJO_CLUB_CONTRACT_ADDRESS="0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3"
+USDC_TOKEN_ADDRESS="0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+
+# Database
+DATABASE_PATH="./db/ajo.db"
+
+# Optional: Run in offline simulation mode
+# SIMULATE_CHAIN=true
+```
+
+### 3. Setup Agent Signer Key
+
+Store the agent wallet's private key securely in Hardhat vars storage:
+
+```bash
+cd contracts
+npx hardhat vars set BASE_SEPOLIA_AGENT_KEY
+# Enter your private key when prompted
+cd ..
+```
+
+### 4. Initialize Database & Seed
+
+```bash
+# Initialize SQLite schema
+npm run db:init
+```
+
+### 5. Run the Bot
+
+```bash
+# Launch the Telegram Coordinator Bot
+npm run bot
 ```
 
 ---
 
-## Local Development
+## 🧪 Testing & Verification
+
+### Adversarial Security Test Suite (63 Tests)
+
+Runs the comprehensive guardrail test suite verifying cap enforcement, rotation integrity, HITL approvals, allowlists, rate limiting, and identity linking:
 
 ```bash
-# 1. Install
-cd packages/hardhat && npm install
-cd ../react-app && npm install
-
-# 2. Run frontend
-cd packages/react-app
-npm run dev
-
-# 3. Expose via ngrok (required for MiniPay)
-ngrok http 3000
-# Paste ngrok URL into MiniPay browser
+npm run test:adversarial
 ```
 
-## Deploy Contract
+### Smart Contract Tests
+
+Runs the Solidity contract unit tests covering round lifecycles, payments, and payout distributions:
 
 ```bash
-cd packages/hardhat
-
-# Celo Sepolia testnet
-npm run deploy:celo-sepolia
-
-# Celo mainnet
-HARDHAT_NETWORK=celo npx hardhat ignition deploy ignition/modules/AjoClub.ts --network celo
-
-# Verify on Celoscan
-npx hardhat verify --network celo <address> "<hub_address>" "ajo-club"
-```
-
-## Deploy Frontend
-
-```bash
-cd packages/react-app
-vercel --prod
+npm run test:contracts
 ```
 
 ---
 
-## Testing
+## 📜 License
 
-```bash
-cd packages/hardhat
-npx hardhat test
-```
-
-**15 tests covering:**
-- `createClub` — happy path, invalid token reverts, maxMembers < 2 reverts
-- `joinClub` — unverified reverts, full club reverts, duplicate reverts
-- `contribute` — double payment reverts, after cycleEnd reverts, non-member reverts
-- `triggerPayout` — not all paid reverts, before cycleEnd reverts, correct recipient + amount
-- Full 3-member lifecycle end-to-end with `ClubComplete` event
-
----
-
-## KarmaGAP Milestones
-
-| # | Milestone | Status |
-|---|-----------|--------|
-| 1 | Contract deployed, create/join/contribute flow working | ✅ Complete |
-| 2 | Self Protocol verification integrated, MiniPay frontend live | ✅ Complete |
-| 3 | Mainnet deploy, cEUR + cKES support, Celoscan verified | ✅ Complete |
-| 4 | Demo video recorded, README polished, Farcaster posts published | 🔄 In progress |
-
----
-
-## Proof of Ship Tracks
-
-- ✅ **MiniApps** — mobile-first MiniPay Mini App
-- ✅ **DeFi & Stablecoin Payments** — Mento cUSD/cEUR/cKES
-- ✅ **Self Protocol bonus** — passport identity gate on club membership
-
----
-
-## Resources
-
-- [MiniPay Docs](https://docs.celo.org/build/build-on-minipay/overview)
-- [Self Protocol Docs](https://docs.self.xyz)
-- [Self Protocol Contracts](https://github.com/selfxyz/self)
-- [Mento Stablecoin Addresses](https://docs.mento.org/mento/developers/deployments/addresses)
-- [Celo Proof of Ship](https://github.com/celo-org/Proof-of-Ship)
-- [KarmaGAP](https://gap.karmahq.xyz)
+MIT License. See [LICENSE](LICENSE) for details.
