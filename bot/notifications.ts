@@ -3,7 +3,7 @@
 // Unified messaging dispatcher usable across bot daemon and worker processes
 // ============================================================================
 
-import { Bot } from "grammy";
+import { Bot, InlineKeyboard } from "grammy";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -55,6 +55,47 @@ export async function sendTelegramNotification(
     return true;
   } catch (err: any) {
     console.warn(`⚠️ [Telegram Notification] Standalone client failed to deliver to ${targetChatOrUserId}: ${err.message}`);
+    return false;
+  }
+}
+
+/**
+ * Sends an interactive approval card with inline keyboard buttons.
+ */
+export async function sendTelegramApprovalCard(
+  targetChatOrUserId: string | number,
+  text: string,
+  keyboard: InlineKeyboard
+): Promise<boolean> {
+  if (activeBotInstance) {
+    try {
+      await activeBotInstance.api.sendMessage(targetChatOrUserId, text, {
+        parse_mode: "Markdown",
+        reply_markup: keyboard,
+      });
+      return true;
+    } catch (err: any) {
+      console.warn(`⚠️ [Telegram Approval Card] Active bot failed to deliver to ${targetChatOrUserId}: ${err.message}`);
+      return false;
+    }
+  }
+
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token || token.trim().length === 0) {
+    return false;
+  }
+
+  try {
+    if (!standaloneBotInstance) {
+      standaloneBotInstance = new Bot(token);
+    }
+    await standaloneBotInstance.api.sendMessage(targetChatOrUserId, text, {
+      parse_mode: "Markdown",
+      reply_markup: keyboard,
+    });
+    return true;
+  } catch (err: any) {
+    console.warn(`⚠️ [Telegram Approval Card] Standalone delivery failed to ${targetChatOrUserId}: ${err.message}`);
     return false;
   }
 }

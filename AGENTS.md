@@ -11,3 +11,12 @@ Each commit should represent a meaningful, logical unit of work that is complete
 Keep commits focused, descriptive, and easy to review or revert. After completing each meaningful piece of functionality, commit it before moving on to the next one.
 
 Use clear commit messages that describe what was actually changed.
+
+## README Instructions
+Professionalize and update the README to reflect the current state of the project.
+
+Treat the README as living documentation: after making major changes to the codebase, review the README and update any affected sections so that it remains accurate and consistent with the actual implementation.
+
+Keep the documentation professional, clear, well-structured, and consistent with the project's existing terminology, architecture, features, commands, and conventions. Do not document functionality that does not exist, and remove or revise outdated information when the implementation changes.
+
+The README should evolve alongside the codebase rather than becoming stale after major changes.

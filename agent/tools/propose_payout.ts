@@ -3,7 +3,7 @@
 // ============================================================================
 
 import { z } from "zod";
-import { circlesRepo, membersRepo, payoutsRepo } from "../../db/index.js";
+import { circlesRepo, membersRepo, payoutsRepo, approvalsRepo } from "../../db/index.js";
 import { GuardrailEngine } from "../guardrails/index.js";
 
 export const proposePayoutSchema = z.object({
@@ -21,6 +21,15 @@ export async function proposePayout(input: ProposePayoutInput) {
   const check = GuardrailEngine.validatePayoutPrerequisites(circleId, round);
   if (!check.valid) {
     return { success: false, error: check.reason };
+  }
+
+  // 1b. Prevent double-firing: Check if an approval is already pending for this round
+  const existingPending = approvalsRepo.getPendingForCircleAndRound(circleId, round);
+  if (existingPending) {
+    return {
+      success: false,
+      error: `A payout proposal is already pending approval for Round #${round + 1} (Approval ID: ${existingPending.id}).`,
+    };
   }
 
   const circle = circlesRepo.getById(circleId)!;

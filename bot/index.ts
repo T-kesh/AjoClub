@@ -68,6 +68,20 @@ export function createBot(): Bot | null {
   return bot;
 }
 
+import { AjoClubIndexer } from "../indexer/index.js";
+import { AgentCoordinator } from "../agent/loop.js";
+
+let daemonIndexer: AjoClubIndexer | null = null;
+let daemonCoordinator: AgentCoordinator | null = null;
+
+export function getDaemonIndexer(): AjoClubIndexer | null {
+  return daemonIndexer;
+}
+
+export function getDaemonCoordinator(): AgentCoordinator | null {
+  return daemonCoordinator;
+}
+
 export async function startBot(): Promise<void> {
   const bot = createBot();
   if (!bot) {
@@ -75,10 +89,30 @@ export async function startBot(): Promise<void> {
     return;
   }
 
-  console.log("🤖 AjoClub Telegram Bot is starting...");
+  console.log("==================================================");
+  console.log("🤖 Starting AjoClub Unified Bot & Autonomous Daemon");
+  console.log("==================================================");
+
+  // 1. Initialize and launch on-chain event indexer in-process
+  try {
+    daemonIndexer = new AjoClubIndexer();
+    await daemonIndexer.init();
+    daemonIndexer.start();
+    console.log("📡 [DAEMON] In-process on-chain indexer started (watching Base Sepolia)");
+  } catch (err: any) {
+    console.warn("⚠️ [DAEMON] Indexer initialization warning:", err.message);
+  }
+
+  // 2. Initialize and start autonomous agent loop in-process
+  daemonCoordinator = new AgentCoordinator();
+  daemonCoordinator.startScheduledLoop(15000);
+  console.log("⏰ [DAEMON] Autonomous agent tick loop started in-process (interval: 15s)");
+
+  // 3. Start Telegram Bot polling
   await bot.start({
     onStart: (info) => {
-      console.log(`✅ Bot @${info.username} is live and listening on Telegram!`);
+      console.log(`✅ [DAEMON] Bot @${info.username} is live and listening on Telegram!`);
+      console.log("==================================================");
     },
   });
 }

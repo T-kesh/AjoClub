@@ -221,20 +221,16 @@ cd ..
 npm run db:init
 ```
 
-### 5. Run the On-Chain Indexer
+### 5. Launch the Unified Coordinator Daemon
 
-Start the indexer to backfill and continuously watch Base Sepolia contract events, keeping SQLite synchronized:
-
-```bash
-npm run indexer
-```
-
-### 6. Run the Bot
+Run the complete autonomous coordinator daemon in a single process. This boots the Telegram bot, starts the Base Sepolia on-chain event indexer, and kicks off the in-process autonomous tick loop (monitoring deadlines, dispatching payment reminders, and proposing payouts):
 
 ```bash
-# Launch the Telegram Coordinator Bot
+# Launch unified bot, indexer & autonomous agent loop
 npm run bot
 ```
+
+> **Standalone Indexer Option:** If you prefer running the on-chain event indexer in a dedicated worker process, run `npm run indexer`. SQLite WAL mode provides concurrent access safely.
 
 ---
 

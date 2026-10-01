@@ -3,10 +3,12 @@
 // Executes scheduled cycle ticks & natural language reasoning with tool calling
 // ============================================================================
 
-import { circlesRepo, membersRepo, CircleRow } from "../db/index.js";
+import { circlesRepo, membersRepo, approvalsRepo, CircleRow } from "../db/index.js";
 import { getLLMAdapter, LLMAdapter, LLMMessage } from "./llm/index.js";
 import { TOOL_DEFINITIONS, executeTool } from "./tools/index.js";
 import { GuardrailEngine } from "./guardrails/index.js";
+import { formatApprovalCard } from "../bot/templates/cards.js";
+import { sendTelegramApprovalCard } from "../bot/notifications.js";
 
 export class AgentCoordinator {
   private llm: LLMAdapter;
@@ -105,12 +107,53 @@ Always be polite, encouraging, transparent, and concise.`;
         // Can we propose payout?
         const check = GuardrailEngine.validatePayoutPrerequisites(circle.id, circle.current_round);
         if (check.valid) {
-          console.log(`🎯 Circle #${circle.id} round ${circle.current_round} ready for payout! Proposing...`);
-          await executeTool("propose_payout", {
+          // Prevent double-firing: Check if an approval is already pending
+          const existingPending = approvalsRepo.getPendingForCircleAndRound(circle.id, circle.current_round);
+          if (existingPending) {
+            console.log(`ℹ️ [AUTONOMOUS TICK] Payout for Circle #${circle.id} Round #${circle.current_round + 1} already pending approval (${existingPending.id}). Skipping.`);
+            continue;
+          }
+
+          console.log(`🎯 [AUTONOMOUS TICK] Circle #${circle.id} Round #${circle.current_round + 1} ready for payout! Proposing...`);
+          const result = await executeTool("propose_payout", {
             circleId: circle.id,
             round: circle.current_round,
             notes: "Autonomous tick detected completed round with all requirements satisfied.",
           });
+
+          if (result.success) {
+            const data = (result as any).data;
+            const { text: cardText, keyboard } = formatApprovalCard({
+              approvalId: data.approvalId,
+              circleName: data.approvalCard.circleName,
+              round: data.round,
+              recipientText: data.approvalCard.recipientText,
+              amountText: data.approvalCard.amountText,
+            });
+
+            // Target destination: circle's Telegram chat or organizer's Telegram user ID
+            const targetChatId = circle.telegram_chat_id;
+            const organizer = members.find((m) => m.payout_order === 0 || m.wallet_address.toLowerCase() === circle.creator_address.toLowerCase());
+            const organizerTgId = organizer?.telegram_user_id;
+
+            let sent = false;
+            if (targetChatId) {
+              sent = await sendTelegramApprovalCard(targetChatId, cardText, keyboard);
+              if (sent) {
+                console.log(`📬 [AUTONOMOUS TICK] Dispatched payout approval card to group ${targetChatId} for Circle #${circle.id}`);
+              }
+            }
+            if (!sent && organizerTgId) {
+              sent = await sendTelegramApprovalCard(organizerTgId, cardText, keyboard);
+              if (sent) {
+                console.log(`📬 [AUTONOMOUS TICK] Dispatched payout approval card to organizer DM (${organizerTgId}) for Circle #${circle.id}`);
+              }
+            }
+
+            if (!sent) {
+              console.log(`ℹ️ [AUTONOMOUS TICK] Payout proposed for Circle #${circle.id} (Approval ID: ${data.approvalId}), but no valid Telegram destination reachable.`);
+            }
+          }
         } else if (now >= graceEnd && unpaidMembers.length > 0) {
           // Grace period expired and unpaid members exist -> flag default
           for (const delinquent of unpaidMembers) {
@@ -128,24 +171,24 @@ Always be polite, encouraging, transparent, and concise.`;
         const hoursRemaining = secondsRemaining / 3600;
 
         for (const unpaid of unpaidMembers) {
+          let reminderType: "DUE_48H" | "DUE_24H" | "DUE_SOON" | null = null;
           if (hoursRemaining <= 6) {
-            await executeTool("send_reminder", {
-              circleId: circle.id,
-              memberAddress: unpaid.wallet_address,
-              reminderType: "DUE_SOON",
-            });
+            reminderType = "DUE_SOON";
           } else if (hoursRemaining <= 24) {
-            await executeTool("send_reminder", {
-              circleId: circle.id,
-              memberAddress: unpaid.wallet_address,
-              reminderType: "DUE_24H",
-            });
+            reminderType = "DUE_24H";
           } else if (hoursRemaining <= 48) {
-            await executeTool("send_reminder", {
+            reminderType = "DUE_48H";
+          }
+
+          if (reminderType) {
+            const res = await executeTool("send_reminder", {
               circleId: circle.id,
               memberAddress: unpaid.wallet_address,
-              reminderType: "DUE_48H",
+              reminderType,
             });
+            if (res.success) {
+              console.log(`📨 [AUTONOMOUS TICK] Dispatched ${reminderType} reminder to ${unpaid.wallet_address} for Circle #${circle.id}`);
+            }
           }
         }
       }

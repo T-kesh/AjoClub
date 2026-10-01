@@ -10,7 +10,7 @@
     "indexer": "tsx indexer/index.ts",
     "db:init": "tsx db/init.ts",
     "test:db": "tsx db/test.ts",
-    "test:agent": "tsx agent/test.ts",
+    "test:agent": "cross-env SIMULATE_CHAIN=true tsx agent/test.ts",
     "pretest:adversarial": "node -e \"const{rmSync,existsSync}=require('fs');const p='./db/ajo_test_adversarial.db';if(existsSync(p))rmSync(p);if(existsSync(p+'-wal'))rmSync(p+'-wal');if(existsSync(p+'-shm'))rmSync(p+'-shm');\"",
     "test:adversarial": "cross-env DATABASE_PATH=./db/ajo_test_adversarial.db tsx --test agent/test_adversarial.ts",
     "test:e2e": "tsx agent/test_e2e.ts",

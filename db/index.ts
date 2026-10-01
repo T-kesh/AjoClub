@@ -470,6 +470,23 @@ export const approvalsRepo = {
       [now, id]
     );
   },
+
+  getPendingForCircleAndRound(circleId: number, round: number): ApprovalRequestRow | undefined {
+    const now = Math.floor(Date.now() / 1000);
+    const rows = db.query<ApprovalRequestRow>(
+      `SELECT * FROM approval_requests WHERE circle_id = ? AND action_type = 'EXECUTE_PAYOUT' AND status = 'PENDING' AND expires_at > ?`,
+      [circleId, now]
+    );
+    for (const r of rows) {
+      try {
+        const payload = JSON.parse(r.payload);
+        if (payload.round === round) {
+          return r;
+        }
+      } catch {}
+    }
+    return undefined;
+  },
 };
 
 // ============================================================================
