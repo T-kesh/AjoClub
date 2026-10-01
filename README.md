@@ -221,7 +221,15 @@ cd ..
 npm run db:init
 ```
 
-### 5. Run the Bot
+### 5. Run the On-Chain Indexer
+
+Start the indexer to backfill and continuously watch Base Sepolia contract events, keeping SQLite synchronized:
+
+```bash
+npm run indexer
+```
+
+### 6. Run the Bot
 
 ```bash
 # Launch the Telegram Coordinator Bot

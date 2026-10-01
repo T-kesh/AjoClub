@@ -61,6 +61,74 @@ export const circlesRepo = {
     return db.get<CircleRow>(`SELECT * FROM circles WHERE contract_circle_id = ?`, [contractCircleId]);
   },
 
+  getByContractCircleIdAndAddress(contractCircleId: number, contractAddress: string): CircleRow | undefined {
+    return db.get<CircleRow>(
+      `SELECT * FROM circles WHERE contract_circle_id = ? AND lower(contract_address) = lower(?)`,
+      [contractCircleId, contractAddress.toLowerCase()]
+    );
+  },
+
+  upsertFromContract(params: {
+    contract_circle_id: number;
+    contract_address: string;
+    name: string;
+    token_address: string;
+    token_symbol?: string;
+    token_decimals?: number;
+    contribution_amount: string;
+    cycle_duration_seconds: number;
+    grace_period_seconds: number;
+    max_members: number;
+    current_round: number;
+    cycle_end_timestamp: number | null;
+    status: CircleStatus;
+    creator_address: string;
+    telegram_chat_id?: string | null;
+  }): CircleRow {
+    const existing = this.getByContractCircleIdAndAddress(params.contract_circle_id, params.contract_address);
+    const now = Math.floor(Date.now() / 1000);
+    if (existing) {
+      db.run(
+        `UPDATE circles SET 
+          name = ?, contribution_amount = ?, cycle_duration_seconds = ?, grace_period_seconds = ?,
+          max_members = ?, current_round = ?, cycle_end_timestamp = ?, status = ?, updated_at = ?
+         WHERE id = ?`,
+        [
+          params.name,
+          params.contribution_amount,
+          params.cycle_duration_seconds,
+          params.grace_period_seconds,
+          params.max_members,
+          params.current_round,
+          params.cycle_end_timestamp,
+          params.status,
+          now,
+          existing.id,
+        ]
+      );
+      return this.getById(existing.id)!;
+    }
+
+    return this.create({
+      contract_circle_id: params.contract_circle_id,
+      contract_address: params.contract_address.toLowerCase(),
+      name: params.name,
+      token_address: params.token_address.toLowerCase(),
+      token_symbol: params.token_symbol || "USDC",
+      token_decimals: params.token_decimals ?? 6,
+      contribution_amount: params.contribution_amount,
+      cycle_duration_seconds: params.cycle_duration_seconds,
+      grace_period_seconds: params.grace_period_seconds,
+      max_members: params.max_members,
+      current_round: params.current_round,
+      cycle_end_timestamp: params.cycle_end_timestamp,
+      status: params.status,
+      creator_address: params.creator_address.toLowerCase(),
+      telegram_chat_id: params.telegram_chat_id || null,
+    });
+  },
+
+
   getByTelegramChatId(chatId: string): CircleRow[] {
     return db.query<CircleRow>(`SELECT * FROM circles WHERE telegram_chat_id = ?`, [chatId]);
   },
@@ -262,10 +330,35 @@ export const membersRepo = {
     );
   },
 
+  recordContribution(circleId: number, wallet: string, amount: string): void {
+    const member = this.getByWallet(circleId, wallet);
+    if (!member) return;
+    const currentContributed = BigInt(member.total_contributed || "0");
+    const addedAmount = BigInt(amount);
+    const newTotal = (currentContributed + addedAmount).toString();
+    db.run(
+      `UPDATE members SET has_paid_current_round = 1, total_contributed = ? WHERE circle_id = ? AND wallet_address = ?`,
+      [newTotal, circleId, wallet.toLowerCase()]
+    );
+  },
+
+  recordPayout(circleId: number, wallet: string, amount: string): void {
+    const member = this.getByWallet(circleId, wallet);
+    if (!member) return;
+    const currentReceived = BigInt(member.total_received || "0");
+    const addedAmount = BigInt(amount);
+    const newTotal = (currentReceived + addedAmount).toString();
+    db.run(
+      `UPDATE members SET total_received = ? WHERE circle_id = ? AND wallet_address = ?`,
+      [newTotal, circleId, wallet.toLowerCase()]
+    );
+  },
+
   resetRoundPaymentStatus(circleId: number): void {
     db.run(`UPDATE members SET has_paid_current_round = 0 WHERE circle_id = ?`, [circleId]);
   },
 };
+
 
 // ============================================================================
 // Contributions Repository
@@ -427,3 +520,40 @@ export const remindersRepo = {
     );
   },
 };
+
+// ============================================================================
+// Indexer State Repository
+// ============================================================================
+export const indexerRepo = {
+  getLastBlock(key: string = "base_sepolia_ajo"): bigint | null {
+    const row = db.get<{ last_block: number }>(`SELECT last_block FROM indexer_state WHERE key = ?`, [key]);
+    return row ? BigInt(row.last_block) : null;
+  },
+
+  setLastBlock(blockNumber: bigint | number, key: string = "base_sepolia_ajo"): void {
+    const now = Math.floor(Date.now() / 1000);
+    db.run(
+      `INSERT INTO indexer_state (key, last_block, updated_at) VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET last_block = excluded.last_block, updated_at = excluded.updated_at`,
+      [key, Number(blockNumber), now]
+    );
+  },
+
+  isEventProcessed(txHash: string, logIndex: number): boolean {
+    const row = db.get<{ count: number }>(
+      `SELECT count(*) as count FROM processed_events WHERE tx_hash = ? AND log_index = ?`,
+      [txHash.toLowerCase(), logIndex]
+    );
+    return (row?.count ?? 0) > 0;
+  },
+
+  recordEvent(txHash: string, logIndex: number, eventName: string, blockNumber: bigint | number): void {
+    const now = Math.floor(Date.now() / 1000);
+    db.run(
+      `INSERT OR IGNORE INTO processed_events (tx_hash, log_index, event_name, block_number, processed_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [txHash.toLowerCase(), logIndex, eventName, Number(blockNumber), now]
+    );
+  },
+};
+

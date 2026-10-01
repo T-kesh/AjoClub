@@ -22,6 +22,8 @@ dotenv.config();
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 
+import { registerActiveBot, sendTelegramNotification } from "./notifications.js";
+
 let activeBot: Bot | null = null;
 
 export function getBot(): Bot | null {
@@ -29,19 +31,12 @@ export function getBot(): Bot | null {
 }
 
 export async function sendTelegramDM(userId: string | number, message: string): Promise<boolean> {
-  const bot = getBot();
-  if (!bot) return false;
-  try {
-    await bot.api.sendMessage(userId, message, { parse_mode: "Markdown" });
-    return true;
-  } catch (err: any) {
-    console.warn(`⚠️ [Telegram DM] Could not deliver to user ${userId}: ${err.message}`);
-    return false;
-  }
+  return sendTelegramNotification(userId, message);
 }
 
 // Hook dispatcher so agent loop and reminders send direct Telegram DMs
 registerReminderDispatcher(sendTelegramDM);
+
 
 
 export function createBot(): Bot | null {
@@ -52,6 +47,7 @@ export function createBot(): Bot | null {
 
   const bot = new Bot(token);
   activeBot = bot;
+  registerActiveBot(bot);
 
   // Command handlers
   bot.command("start", handleStart);

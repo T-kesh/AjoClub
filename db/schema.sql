@@ -125,3 +125,22 @@ CREATE TABLE IF NOT EXISTS reminders (
 );
 
 CREATE INDEX IF NOT EXISTS idx_reminders_dedup ON reminders(circle_id, round, member_address, reminder_type);
+
+-- 8. Indexer State & Processed Events (Idempotency)
+CREATE TABLE IF NOT EXISTS indexer_state (
+    key TEXT PRIMARY KEY,
+    last_block INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS processed_events (
+    tx_hash TEXT NOT NULL,
+    log_index INTEGER NOT NULL,
+    event_name TEXT NOT NULL,
+    block_number INTEGER NOT NULL,
+    processed_at INTEGER NOT NULL,
+    PRIMARY KEY (tx_hash, log_index)
+);
+
+CREATE INDEX IF NOT EXISTS idx_processed_events_block ON processed_events(block_number);
+

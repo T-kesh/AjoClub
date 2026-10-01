@@ -102,3 +102,18 @@ export interface ReminderRow {
   reminder_type: ReminderType;
   sent_at: number;
 }
+
+export interface IndexerStateRow {
+  key: string;
+  last_block: number;
+  updated_at: number;
+}
+
+export interface ProcessedEventRow {
+  tx_hash: string;
+  log_index: number;
+  event_name: string;
+  block_number: number;
+  processed_at: number;
+}
+
