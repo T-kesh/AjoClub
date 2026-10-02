@@ -19,10 +19,9 @@ export async function waitForTransactionReceipt({ hash }: { hash: `0x${string}` 
 export const wagmiConfig = createConfig({
   chains: [baseSepolia],
   connectors: [
+    injected({ target: "metaMask" }),
     coinbaseWallet({
       appName: "AjoClub",
-      // "all" lets the SDK use the browser extension on testnets (Base Sepolia)
-      // and Smart Wallet passkeys on mainnet. "smartWalletOnly" rejects testnets.
       preference: "all",
     }),
     injected(),
