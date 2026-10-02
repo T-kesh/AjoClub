@@ -1,4 +1,4 @@
-export const AJO_CLUB_ADDRESS = (process.env.NEXT_PUBLIC_AJO_CLUB_ADDRESS ?? "") as `0x${string}`;
+export const AJO_CLUB_ADDRESS = (process.env.NEXT_PUBLIC_AJO_CLUB_ADDRESS || "0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3") as `0x${string}`;
 
 export const AJO_CLUB_ABI = [
   // ── Club lifecycle ──────────────────────────────────────────────────────────

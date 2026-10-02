@@ -5,8 +5,8 @@ import { ChainGuard } from "@/components/ChainGuard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
-  title: "AjoClub",
-  description: "Onchain rotating savings clubs on Celo",
+  title: "AjoClub | Decentralized Savings Circles on Base",
+  description: "Onchain rotating savings and credit circles (ROSCAs) powered by Base, Coinbase Smart Wallet, and USDC.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

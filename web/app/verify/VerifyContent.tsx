@@ -1,13 +1,13 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SelfVerifyButton } from "@/components/SelfVerifyButton";
-import { useMiniPay } from "@/hooks/useMiniPay";
+import { useAccount } from "wagmi";
 
 export default function VerifyContent() {
   const router = useRouter();
   const params = useSearchParams();
   const returnTo = params.get("returnTo") ?? "/";
-  const { address } = useMiniPay();
+  const { address } = useAccount();
 
   function onSuccess() {
     router.push(returnTo);

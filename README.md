@@ -234,6 +234,38 @@ npm run bot
 
 ---
 
+## 🌐 Web Application (Base Sepolia + OnchainKit)
+
+AjoClub provides a modern, responsive web application (`web/`) built with Next.js 14, React 18, Wagmi 2, and `@coinbase/onchainkit`:
+
+### Key Features
+- **Coinbase Smart Wallet Passkeys:** 1-tap onboarding using biometric passkeys (FaceID / TouchID / Windows Hello) with zero seed-phrase friction.
+- **Paymaster-Sponsored Gasless Contributions:** Uses ERC-5792 batched calls (`wallet_sendCalls`) via Coinbase Developer Platform (CDP) Paymaster to sponsor gas fees and execute token `approve` + `contribute` in a single atomic tap.
+- **Basename & Identity Resolution:** Roster displays utilize OnchainKit's `<Identity>`, `<Avatar>`, `<Name>`, and `<Address>` components to automatically resolve member `.base.eth` names and verified avatars.
+- **Injected Wallet Support:** Seamless fallback to standard browser wallets (MetaMask, Rainbow, Coinbase Wallet extension) with a robust 2-step approve & contribute flow.
+- **Native 6-Decimal USDC:** Fully calibrated for Circle's native USDC on Base Sepolia (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`).
+
+### Running the Web Application
+
+```bash
+# Navigate to web directory
+cd web
+
+# Set your environment variables in .env.local
+NEXT_PUBLIC_CHAIN_ID=84532
+NEXT_PUBLIC_AJO_CLUB_ADDRESS=0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3
+NEXT_PUBLIC_BASE_RPC=https://sepolia.base.org
+NEXT_PUBLIC_CDP_API_KEY=your_cdp_api_key
+
+# Launch development server
+npm run dev
+
+# Or build for production
+npm run build
+```
+
+---
+
 ## 🧪 Testing & Verification
 
 ### Adversarial Security Test Suite (63 Tests)
