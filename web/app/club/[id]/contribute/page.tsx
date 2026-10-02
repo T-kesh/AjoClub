@@ -9,7 +9,7 @@ import { useGetClub, useContribute } from "@/hooks/useAjoClub";
 import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI, tokenLabel, tokenDecimals } from "@/lib/contract";
 import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 
 const ERC20_ABI = [
@@ -70,13 +70,15 @@ export default function ContributePage() {
   });
 
   // When batched call confirms
-  if (step === "gasless_sending" && callsStatus?.status === "CONFIRMED") {
-    const receiptHash = callsStatus.receipts?.[0]?.transactionHash;
-    if (receiptHash && receiptHash !== txHash) {
-      setTxHash(receiptHash);
-      setStep("done");
+  useEffect(() => {
+    if (step === "gasless_sending" && callsStatus?.status === "CONFIRMED") {
+      const receiptHash = callsStatus.receipts?.[0]?.transactionHash;
+      if (receiptHash && receiptHash !== txHash) {
+        setTxHash(receiptHash);
+        setStep("done");
+      }
     }
-  }
+  }, [step, callsStatus, txHash]);
 
   // Read current allowance for standard fallback
   const { data: allowance, refetch: refetchAllowance } = useReadContract({

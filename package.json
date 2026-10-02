@@ -15,7 +15,10 @@
     "test:adversarial": "cross-env DATABASE_PATH=./db/ajo_test_adversarial.db tsx --test agent/test_adversarial.ts",
     "test:e2e": "tsx agent/test_e2e.ts",
     "compile:contracts": "npm --prefix contracts run compile",
-    "test:contracts": "npm --prefix contracts run test"
+    "test:contracts": "npm --prefix contracts run test",
+    "web:dev": "npm --prefix web run dev",
+    "web:build": "npm --prefix web run build",
+    "web:lint": "npm --prefix web run lint"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

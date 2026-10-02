@@ -26,22 +26,13 @@ export default function ClubPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  let clubId: bigint;
-  try {
-    clubId = BigInt(id);
-  } catch {
-    return (
-      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
-        <Navbar />
-        <main className="container-app py-16 text-center">
-          <p className="text-red-500 font-bold mb-2">Invalid circle ID.</p>
-          <Link href="/clubs" className="text-sm text-[#0B7A4B] dark:text-[#22C55E] underline">
-            Browse all clubs
-          </Link>
-        </main>
-      </div>
-    );
-  }
+  const clubId = useMemo(() => {
+    try {
+      return BigInt(id);
+    } catch {
+      return undefined;
+    }
+  }, [id]);
 
   const { address, isConnected } = useAccount();
 
@@ -54,6 +45,20 @@ export default function ClubPage() {
 
   const [activeTab, setActiveTab] = useState<"members" | "details" | "activity">("members");
   const [actionError, setActionError] = useState<string | null>(null);
+
+  if (clubId === undefined) {
+    return (
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
+        <Navbar />
+        <main className="container-app py-16 text-center">
+          <p className="text-red-500 font-bold mb-2">Invalid circle ID.</p>
+          <Link href="/clubs" className="text-sm text-[#0B7A4B] dark:text-[#22C55E] underline">
+            Browse all clubs
+          </Link>
+        </main>
+      </div>
+    );
+  }
 
   if (isLoading || !club) {
     return (
@@ -87,6 +92,7 @@ export default function ClubPage() {
   const showReminderBanner = status === 1 && isMember && !userHasPaid && hoursUntilEnd > 0 && hoursUntilEnd <= 48;
 
   async function handleJoin() {
+    if (clubId === undefined) return;
     setActionError(null);
     try {
       const hash = await joinClub(clubId);
@@ -99,6 +105,7 @@ export default function ClubPage() {
   }
 
   async function handleTrigger() {
+    if (clubId === undefined) return;
     setActionError(null);
     try {
       const hash = await triggerPayout(clubId);
@@ -111,6 +118,7 @@ export default function ClubPage() {
   }
 
   async function handleStart() {
+    if (clubId === undefined) return;
     setActionError(null);
     try {
       const hash = await startClub(clubId);
