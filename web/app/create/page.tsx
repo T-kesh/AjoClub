@@ -17,9 +17,6 @@ const CYCLE_OPTIONS = [
   { label: "30 days (Monthly)", value: 30 * 24 * 3600 },
 ];
 
-const inputCls =
-  "w-full border border-gray-300 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all";
-
 export default function CreateClubPage() {
   const router = useRouter();
   const { isConnected } = useAccount();
@@ -32,7 +29,7 @@ export default function CreateClubPage() {
   const [token, setToken] = useState(defaultToken);
   const [amount, setAmount] = useState("50");
   const [cycle, setCycle] = useState(CYCLE_OPTIONS[0].value);
-  const [maxMembers, setMaxMembers] = useState("3");
+  const [maxMembers, setMaxMembers] = useState("5");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -96,151 +93,165 @@ export default function CreateClubPage() {
     validationError ?? (txError ? friendlyError(txError as Error) : null);
 
   const busy = isPending || isConfirming;
+  const potPreview = (parseInt(maxMembers, 10) || 0) * (parseFloat(amount) || 0);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] text-[#1F2937] dark:text-gray-100 flex flex-col transition-colors">
       <Navbar />
 
-      <main className="flex-1 max-w-xl mx-auto w-full px-4 py-8">
-        <Link
-          href="/clubs"
-          className="text-xs text-gray-500 dark:text-gray-400 mb-6 inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-        >
-          ← Back to circles
-        </Link>
+      <main className="container-app py-10 flex-1">
+        <div className="mx-auto max-w-2xl">
+          <Link
+            href="/clubs"
+            className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-[#0B3D2E] dark:hover:text-white inline-flex items-center gap-1.5 transition-colors mb-4"
+          >
+            ← Back to clubs
+          </Link>
 
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 sm:p-8 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="text-3xl">🫙</span>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-                Create a Savings Circle
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Deploy a new onchain ROSCA circle on Base Sepolia
-              </p>
-            </div>
+          <div>
+            <span className="eyebrow">Set up your savings circle</span>
+            <h1 className="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0B3D2E] dark:text-white">
+              Create Club
+            </h1>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              Choose the rules once. The smart contract handles the rotation.
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                Circle Name
-              </label>
-              <input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Base Builders Circle"
-                className={inputCls}
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                Currency
-              </label>
-              <select
-                value={token}
-                onChange={(e) => setToken(e.target.value as `0x${string}`)}
-                className={inputCls}
-              >
-                {Object.entries(SUPPORTED_TOKENS).map(([label, addr]) => (
-                  <option key={addr} value={addr}>
-                    {label} ({tokenLabel(addr)}) · Base Sepolia
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                Contribution Amount (per member, per cycle)
-              </label>
-              <div className="relative">
+          <div className="card mt-8 p-6 sm:p-8">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  Club Name
+                </label>
                 <input
                   required
-                  type="number"
-                  step="any"
-                  min="1"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="50"
-                  className={inputCls}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Dream Builders"
+                  className="input"
                 />
-                <span className="absolute right-4 top-3 text-xs font-bold text-gray-500 dark:text-gray-400">
-                  USDC
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  Token
+                </label>
+                <select
+                  value={token}
+                  onChange={(e) => setToken(e.target.value as `0x${string}`)}
+                  className="input font-semibold"
+                >
+                  {Object.entries(SUPPORTED_TOKENS).map(([label, addr]) => (
+                    <option key={addr} value={addr}>
+                      {label} ({tokenLabel(addr)}) · Base Sepolia (6 Decimals)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  Contribution Amount (per member, per cycle)
+                </label>
+                <div className="relative">
+                  <input
+                    required
+                    type="number"
+                    step="any"
+                    min="1"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="50"
+                    className="input font-bold pr-16"
+                  />
+                  <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-400">
+                    USDC
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                    Cycle Duration
+                  </label>
+                  <select
+                    value={cycle}
+                    onChange={(e) => setCycle(Number(e.target.value))}
+                    className="input"
+                  >
+                    {CYCLE_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                    Max Members
+                  </label>
+                  <select
+                    value={maxMembers}
+                    onChange={(e) => setMaxMembers(e.target.value)}
+                    className="input"
+                  >
+                    {["3", "5", "8", "10", "12", "15", "20"].map((n) => (
+                      <option key={n} value={n}>
+                        {n} members
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Pot preview box */}
+              <div className="rounded-2xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/60 p-4 text-xs font-semibold text-green-900 dark:text-green-200 flex items-center justify-between">
+                <span>Total Pot per Round:</span>
+                <span className="text-base font-extrabold text-[#0B7A4B] dark:text-[#22C55E]">
+                  {potPreview} USDC
                 </span>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                Cycle Duration
-              </label>
-              <select
-                value={cycle}
-                onChange={(e) => setCycle(Number(e.target.value))}
-                className={inputCls}
-              >
-                {CYCLE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {displayError && (
+                <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 text-xs text-red-700 dark:text-red-300 text-center font-semibold">
+                  {displayError}
+                </div>
+              )}
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-                Circle Size (Max Members)
-              </label>
-              <input
-                required
-                type="number"
-                min="2"
-                max="30"
-                value={maxMembers}
-                onChange={(e) => setMaxMembers(e.target.value)}
-                className={inputCls}
-              />
-              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                Total pot size will be: {parseInt(maxMembers, 10) * (parseFloat(amount) || 0) || 0} USDC per round
+              {!isConnected ? (
+                <p className="text-center text-xs text-slate-500 py-2">
+                  Connect your wallet at the top right to deploy this circle.
+                </p>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className="btn-green w-full !py-4 text-base font-bold shadow-md flex items-center justify-center gap-2 mt-4"
+                >
+                  {isPending ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-[#0B3D2E] border-t-transparent rounded-full animate-spin" />
+                      Confirming in Wallet…
+                    </>
+                  ) : isConfirming ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-[#0B3D2E] border-t-transparent rounded-full animate-spin" />
+                      Deploying Circle on Base Sepolia…
+                    </>
+                  ) : (
+                    "Create Club on Base →"
+                  )}
+                </button>
+              )}
+
+              <p className="text-center text-xs text-slate-400">
+                You will confirm the transaction with your connected Smart Wallet or browser wallet.
               </p>
-            </div>
-
-            {displayError && (
-              <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 text-xs text-red-700 dark:text-red-300 text-center">
-                {displayError}
-              </div>
-            )}
-
-            {!isConnected ? (
-              <p className="text-center text-xs text-gray-500 dark:text-gray-400 py-2">
-                Connect your wallet at the top right to deploy this circle.
-              </p>
-            ) : (
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-base transition-all shadow-md flex items-center justify-center gap-2 mt-2"
-              >
-                {isPending ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Confirming in Wallet…
-                  </>
-                ) : isConfirming ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Deploying Circle on Base Sepolia…
-                  </>
-                ) : (
-                  "Create Circle"
-                )}
-              </button>
-            )}
-          </form>
+            </form>
+          </div>
         </div>
       </main>
     </div>

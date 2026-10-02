@@ -1,17 +1,27 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ChainGuard } from "@/components/ChainGuard";
-import { ThemeToggle } from "@/components/ThemeToggle";
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-plus-jakarta",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "AjoClub | Decentralized Savings Circles on Base",
-  description: "Onchain rotating savings and credit circles (ROSCAs) powered by Base, Coinbase Smart Wallet, and USDC.",
+  title: "AjoClub | Save Together. Take Turns.",
+  description: "Onchain rotating savings clubs (ROSCAs) powered by Base, Coinbase Smart Wallet, and USDC.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={plusJakarta.variable} suppressHydrationWarning>
       <head>
         {/* Prevent flash of wrong theme — runs before React hydrates */}
         <script
@@ -27,10 +37,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="bg-gray-50 dark:bg-gray-950 min-h-screen transition-colors duration-200">
+      <body className="font-sans bg-[#F8FAF6] text-[#1F2937] dark:bg-[#071F17] dark:text-gray-100 min-h-screen transition-colors duration-200 antialiased selection:bg-[#22C55E]/20 selection:text-[#0B3D2E]">
         <Providers>
           <ChainGuard>
-            <ThemeToggle />
             {children}
           </ChainGuard>
         </Providers>

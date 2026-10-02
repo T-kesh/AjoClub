@@ -4,11 +4,59 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --forest: #0B3D2E;
+  --emerald: #22C55E;
+  --gold: #FACC15;
+  --ivory: #F8FAF6;
+  --charcoal: #1F2937;
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
   }
   body {
-    @apply bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100;
+    background-color: var(--ivory);
+    color: var(--charcoal);
   }
+}
+
+@layer components {
+  .container-app {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .card {
+    @apply rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_40px_rgba(11,61,46,0.06)] dark:border-[#164738] dark:bg-[#0B2F28]/95 dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)];
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0B3D2E] px-5 py-3 font-semibold text-white transition-all hover:-translate-y-0.5 hover:bg-[#082F24] active:translate-y-0 shadow-sm dark:bg-[#22C55E] dark:text-[#0B2F28] dark:hover:bg-[#35E77B];
+  }
+  .btn-green {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-[#22C55E] px-5 py-3 font-semibold text-[#0B3D2E] transition-all hover:-translate-y-0.5 hover:bg-[#16A34A] hover:text-white active:translate-y-0 shadow-sm;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3 font-semibold text-[#0B3D2E] transition-all hover:bg-slate-50 active:translate-y-0 shadow-sm dark:border-[#1E5645] dark:bg-[#0D382D] dark:text-gray-100 dark:hover:bg-[#13493B];
+  }
+  .input {
+    @apply w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-[#1F2937] outline-none transition-all placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-green-100 dark:border-[#1E5645] dark:bg-[#08261F] dark:text-gray-100 dark:focus:ring-green-900/40;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-green-200/70 bg-green-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-[#0B7A4B] dark:border-green-800/60 dark:bg-green-950/40 dark:text-green-300;
+  }
+}
+
+.mesh {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 10%, rgba(250, 204, 21, 0.14), transparent 24%),
+    linear-gradient(135deg, #F8FAF6 0%, #EFF9F1 100%);
+}
+
+.dark .mesh {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(34, 197, 94, 0.15), transparent 30%),
+    radial-gradient(circle at 80% 10%, rgba(250, 204, 21, 0.08), transparent 25%),
+    linear-gradient(135deg, #071F17 0%, #051912 100%);
 }

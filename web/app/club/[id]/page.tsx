@@ -17,16 +17,10 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { waitForTransactionReceipt } from "@/lib/wagmi";
 import { Navbar } from "@/components/Navbar";
 import { friendlyError } from "@/lib/errors";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 
 const STATUS = ["Open", "Active", "Complete", "Cancelled"];
-const STATUS_BADGE = [
-  "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border-blue-200 dark:border-blue-800",
-  "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
-  "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700",
-  "bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 border-red-200 dark:border-red-800",
-];
 
 export default function ClubPage() {
   const { id } = useParams<{ id: string }>();
@@ -37,12 +31,12 @@ export default function ClubPage() {
     clubId = BigInt(id);
   } catch {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
         <Navbar />
-        <main className="p-6 text-center pt-20">
-          <p className="text-red-500 font-semibold mb-2">Invalid circle ID.</p>
-          <Link href="/clubs" className="text-sm text-blue-600 dark:text-blue-400 underline">
-            Browse all circles
+        <main className="container-app py-16 text-center">
+          <p className="text-red-500 font-bold mb-2">Invalid circle ID.</p>
+          <Link href="/clubs" className="text-sm text-[#0B7A4B] dark:text-[#22C55E] underline">
+            Browse all clubs
           </Link>
         </main>
       </div>
@@ -58,15 +52,16 @@ export default function ClubPage() {
   const { triggerPayout, isPending: isTriggering } = useTriggerPayout();
   const { startClub, isPending: isStarting } = useStartClub();
 
+  const [activeTab, setActiveTab] = useState<"members" | "details" | "activity">("members");
   const [actionError, setActionError] = useState<string | null>(null);
 
   if (isLoading || !club) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
         <Navbar />
-        <main className="p-6 text-center text-gray-400 dark:text-gray-500 pt-20 flex flex-col items-center">
-          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-3" />
-          <p className="text-sm">Loading circle details…</p>
+        <main className="container-app py-20 text-center flex flex-col items-center">
+          <div className="w-8 h-8 border-3 border-[#22C55E] border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm font-semibold text-slate-500">Loading club details from Base…</p>
         </main>
       </div>
     );
@@ -76,12 +71,15 @@ export default function ClubPage() {
   const [, paid] = paymentData ?? [[], []];
 
   const decimals = tokenDecimals(token);
+  const symbol = tokenLabel(token);
   const isMember = members.some((m: string) => m.toLowerCase() === address?.toLowerCase());
   const userIndex = members.findIndex((m: string) => m.toLowerCase() === address?.toLowerCase());
   const userHasPaid = isMember && userIndex >= 0 ? Boolean(paid[userIndex]) : false;
+  const paidCount = paid.filter(Boolean).length;
   const allPaid = paid.length > 0 && paid.every(Boolean);
   const cycleEnded = Number(cycleEnd) > 0 && Date.now() / 1000 >= Number(cycleEnd);
   const potSize = contribution * BigInt(members.length || 1);
+  const cycleDays = Math.round(Number(cycleDuration) / 86400);
 
   // Time calculations
   const now = Date.now() / 1000;
@@ -125,221 +123,322 @@ export default function ClubPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] text-[#1F2937] dark:text-gray-100 flex flex-col transition-colors">
       <Navbar />
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-8 pb-32">
-        {/* Navigation */}
+      <main className="container-app py-8 pb-32 flex-1">
+        {/* Back Link */}
         <Link
           href="/clubs"
-          className="text-xs text-gray-500 dark:text-gray-400 mb-6 inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
+          className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-[#0B3D2E] dark:hover:text-white inline-flex items-center gap-1.5 transition-colors"
         >
-          ← Back to all circles
+          ← Back to clubs
         </Link>
 
-        {/* Header Card */}
-        <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm mb-6">
-          <div className="flex items-start justify-between gap-4 mb-2">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-3xl">🫙</span>
-                <h1 className="text-2xl font-extrabold tracking-tight">{name}</h1>
+        {/* 2-Column Responsive Layout matching mockup */}
+        <div className="mt-5 grid gap-6 lg:grid-cols-[1.25fr_.75fr] items-start">
+          {/* Main Left Content */}
+          <div className="space-y-6">
+            {/* Club Header Card */}
+            <div className="card p-6 sm:p-7">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-sm shrink-0">
+                    🫙
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B3D2E] dark:text-white">
+                        {name}
+                      </h1>
+                      <span className="text-[#22C55E] text-lg font-bold" title="Verified onchain">
+                        ✓
+                      </span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                      {members.length} members · {symbol} · {formatUnits(contribution, decimals)} {symbol} per cycle · {cycleDays} days
+                    </p>
+                  </div>
+                </div>
+
+                <span
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold shrink-0 ${
+                    status === 1
+                      ? "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300"
+                      : status === 0
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                  }`}
+                >
+                  {STATUS[status] ?? "Unknown"}
+                </span>
               </div>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 font-mono">
-                Circle #{clubId.toString()} · Base Sepolia
-              </p>
+
+              {/* Active Cycle Box */}
+              {status === 1 && (
+                <div className="mt-6 rounded-3xl bg-[#0B3D2E] dark:bg-[#051F18] p-6 text-white shadow-lg border border-green-800/40">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-white/60">
+                        Current Cycle {Number(currentRound) + 1} of {members.length}
+                      </p>
+                      <div className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+                        <CountdownTimer cycleEnd={cycleEnd} />
+                      </div>
+                    </div>
+                    <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-[#22C55E]/40 text-sm font-bold bg-[#08291F]">
+                      {paidCount}/{members.length}
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/15">
+                    <div
+                      className="h-full rounded-full bg-[#22C55E] transition-all duration-500"
+                      style={{
+                        width: `${Math.max(5, (paidCount / (members.length || 1)) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <div className="mt-3 flex justify-between text-xs text-white/60 font-medium">
+                    <span>{paidCount} contributions received</span>
+                    <span>Pot: {formatUnits(potSize, decimals)} {symbol}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Your Position & Quick Action Row */}
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 p-4 border border-slate-100 dark:border-[#164738]/60">
+                  <p className="text-xs text-slate-400 dark:text-slate-400 font-medium">Your Position</p>
+                  <p className="mt-1 font-bold text-base text-[#0B3D2E] dark:text-white">
+                    {isMember
+                      ? `#${userIndex + 1} of ${members.length}`
+                      : "Not yet in this club"}
+                  </p>
+                </div>
+
+                {status === 1 && isMember && !userHasPaid ? (
+                  <Link
+                    href={`/club/${clubId}/contribute`}
+                    className="btn-green text-center font-bold flex items-center justify-center gap-2 text-base shadow-sm"
+                  >
+                    <span>⚡</span> Contribute (Gasless)
+                  </Link>
+                ) : status === 0 && !isMember ? (
+                  <button
+                    onClick={handleJoin}
+                    disabled={isJoining || members.length >= Number(maxMembers)}
+                    className="btn-green disabled:opacity-50 text-center font-bold text-base shadow-sm"
+                  >
+                    {isJoining ? "Joining…" : "Join This Club"}
+                  </button>
+                ) : (
+                  <div className="rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 p-4 border border-slate-100 dark:border-[#164738]/60 flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-slate-400 font-medium">Round Status</p>
+                      <p className="mt-0.5 font-bold text-sm text-[#0B3D2E] dark:text-white">
+                        {status === 0
+                          ? "Recruiting members"
+                          : userHasPaid
+                          ? "✓ You Paid"
+                          : "Active Cycle"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
-                STATUS_BADGE[status] ?? STATUS_BADGE[2]
-              }`}
-            >
-              {STATUS[status] ?? "Unknown"}
-            </span>
+
+            {/* Error prompt */}
+            {actionError && (
+              <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-4 text-xs font-semibold text-red-700 dark:text-red-300">
+                {actionError}
+              </div>
+            )}
+
+            {/* Tabs & Roster Card */}
+            <div className="card p-6 sm:p-7">
+              {/* Tab Navigation */}
+              <div className="flex gap-8 border-b border-slate-100 dark:border-[#164738] pb-4 text-sm font-bold">
+                <button
+                  onClick={() => setActiveTab("members")}
+                  className={`transition-colors ${
+                    activeTab === "members"
+                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  }`}
+                >
+                  Members ({members.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab("details")}
+                  className={`transition-colors ${
+                    activeTab === "details"
+                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  }`}
+                >
+                  Details
+                </button>
+                <button
+                  onClick={() => setActiveTab("activity")}
+                  className={`transition-colors ${
+                    activeTab === "activity"
+                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  }`}
+                >
+                  Activity
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="mt-5">
+                {activeTab === "members" && (
+                  <div>
+                    {members.length > 0 ? (
+                      <MemberList
+                        members={members}
+                        paid={paid.length > 0 ? paid : Array(members.length).fill(false)}
+                        currentRound={currentRound}
+                        userAddress={address}
+                      />
+                    ) : (
+                      <p className="text-center py-8 text-xs text-slate-400">
+                        No members joined yet.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === "details" && (
+                  <div className="space-y-4 text-sm">
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#164738]">
+                      <span className="text-slate-500">Contract Address</span>
+                      <span className="font-mono text-xs text-[#0B7A4B] dark:text-[#22C55E]">
+                        {AJO_CLUB_ADDRESS}
+                      </span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#164738]">
+                      <span className="text-slate-500">Grace Period</span>
+                      <span className="font-bold">{Math.round(Number(gracePeriod) / 3600)} hours</span>
+                    </div>
+                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#164738]">
+                      <span className="text-slate-500">Token Contract</span>
+                      <span className="font-mono text-xs">{token}</span>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "activity" && (
+                  <div className="text-center py-8 text-xs text-slate-400">
+                    <p>On-chain event logs indexed from Base Sepolia.</p>
+                    <a
+                      href={`https://sepolia.basescan.org/address/${AJO_CLUB_ADDRESS}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-block text-[#0B7A4B] dark:text-[#22C55E] underline"
+                    >
+                      View transaction events on Basescan ↗
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-4 border-t border-gray-100 dark:border-gray-800/80 text-xs">
-            <div>
-              <span className="text-gray-400 dark:text-gray-500 block">Contribution</span>
-              <span className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-                {formatUnits(contribution, decimals)} {tokenLabel(token)}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400 dark:text-gray-500 block">Cycle Cadence</span>
-              <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-                {Math.round(Number(cycleDuration) / 86400)} days
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400 dark:text-gray-500 block">Members</span>
-              <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-                {members.length} / {maxMembers.toString()}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400 dark:text-gray-500 block">Round</span>
-              <span className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
-                {status === 1 ? `${Number(currentRound) + 1} of ${members.length}` : "-"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Due Reminder Banner */}
-        {showReminderBanner && (
-          <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 p-4 mb-6 shadow-sm">
-            <p className="text-xs font-bold text-amber-800 dark:text-amber-200 flex items-center gap-1.5 mb-1">
-              <span>⏰</span> Payment Due Soon
+          {/* Right Sidebar: Club Summary Card */}
+          <aside className="card p-6 sm:p-7 lg:sticky lg:top-24">
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Club Summary
             </p>
-            <p className="text-xs text-amber-700 dark:text-amber-300">
-              Your contribution of {formatUnits(contribution, decimals)} {tokenLabel(token)} is due within {Math.ceil(hoursUntilEnd)} hours.
-            </p>
-          </div>
-        )}
-
-        {/* Active Pot Card */}
-        {status === 1 && (
-          <div className="rounded-3xl bg-gradient-to-br from-blue-500/10 via-indigo-500/10 to-blue-500/5 border border-blue-200 dark:border-blue-800/60 p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-            <div>
-              <span className="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider block mb-1">
-                Round {Number(currentRound) + 1} Pot
-              </span>
-              <span className="text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">
-                {formatUnits(potSize, decimals)} {tokenLabel(token)}
-              </span>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-                Paid out to round recipient upon cycle completion
-              </p>
+            <div className="mt-5 space-y-4">
+              {[
+                ["Contribution", `${formatUnits(contribution, decimals)} ${symbol}`],
+                ["Cycle Duration", `${cycleDays} days`],
+                ["Members Filled", `${members.length} / ${maxMembers.toString()}`],
+                ["Current Pot", `${formatUnits(potSize, decimals)} ${symbol}`],
+                [
+                  "Your Payout",
+                  isMember ? `Round ${userIndex + 1}` : "Join to participate",
+                ],
+              ].map(([k, v]) => (
+                <div
+                  key={k}
+                  className="flex justify-between items-center border-b border-slate-100 dark:border-[#164738] pb-3.5 text-sm"
+                >
+                  <span className="text-slate-500 dark:text-slate-400">{k}</span>
+                  <span className="font-bold text-[#0B3D2E] dark:text-white">{v}</span>
+                </div>
+              ))}
             </div>
-            <div className="text-left sm:text-right bg-white/60 dark:bg-gray-900/60 rounded-2xl p-3 border border-blue-100 dark:border-blue-900/50">
-              <span className="text-xs text-gray-500 dark:text-gray-400 block mb-0.5">
-                Cycle ends in
-              </span>
-              <CountdownTimer cycleEnd={cycleEnd} />
+
+            <div className="mt-6 pt-2">
+              <a
+                href={`https://sepolia.basescan.org/address/${AJO_CLUB_ADDRESS}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full btn-secondary text-center text-xs py-3 block"
+              >
+                View on Basescan ↗
+              </a>
             </div>
-          </div>
-        )}
-
-        {/* Member Roster with Basenames */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
-              Circle Members ({members.length})
-            </h2>
-            <span className="text-xs text-gray-400 dark:text-gray-500">
-              Powered by OnchainKit & Basenames
-            </span>
-          </div>
-
-          {members.length > 0 ? (
-            <MemberList
-              members={members}
-              paid={paid.length > 0 ? paid : Array(members.length).fill(false)}
-              currentRound={currentRound}
-              userAddress={address}
-            />
-          ) : (
-            <p className="text-xs text-gray-400 dark:text-gray-500 py-6 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-              No members yet. Be the first to join!
-            </p>
-          )}
-        </div>
-
-        {/* Error message */}
-        {actionError && (
-          <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 mb-6 text-xs text-red-700 dark:text-red-300 text-center">
-            {actionError}
-          </div>
-        )}
-
-        {/* Contract Link */}
-        <div className="text-center">
-          <a
-            href={`https://sepolia.basescan.org/address/${AJO_CLUB_ADDRESS}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-gray-400 hover:text-blue-500 underline font-mono"
-          >
-            View contract on Basescan ↗
-          </a>
+          </aside>
         </div>
       </main>
 
-      {/* Floating Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-gray-950/90 backdrop-blur-md border-t border-gray-200 dark:border-gray-800 z-30">
-        <div className="max-w-2xl mx-auto flex flex-col gap-2">
+      {/* Floating Bottom Bar for Essential Lifecycle Actions */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 dark:bg-[#071F17]/95 backdrop-blur-md border-t border-slate-200 dark:border-[#164738] z-30 shadow-lg">
+        <div className="container-app max-w-xl mx-auto flex flex-col gap-2">
           {!isConnected ? (
-            <p className="text-center text-xs text-gray-500 dark:text-gray-400 py-1">
-              Connect your wallet at the top right to join or interact with this circle.
+            <p className="text-center text-xs text-slate-500 dark:text-slate-400 py-1">
+              Connect your wallet at the top right to interact with this circle.
             </p>
           ) : (
             <>
-              {/* Join Club */}
               {status === 0 && !isMember && (
                 <button
                   onClick={handleJoin}
                   disabled={isJoining || members.length >= Number(maxMembers)}
-                  className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-base transition-all shadow-md"
+                  className="w-full btn-green !py-3.5 text-base font-bold shadow-md"
                 >
-                  {isJoining
-                    ? "Confirming in Wallet…"
-                    : members.length >= Number(maxMembers)
-                    ? "Circle Full"
-                    : "Join Circle"}
+                  {isJoining ? "Joining…" : "Join Circle"}
                 </button>
               )}
 
-              {/* Start Club (Creator only) */}
               {status === 0 && isMember && members.length === Number(maxMembers) && (
                 <button
                   onClick={handleStart}
                   disabled={isStarting}
-                  className="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-base transition-all shadow-md"
+                  className="w-full btn-primary !py-3.5 text-base font-bold shadow-md"
                 >
                   {isStarting ? "Starting Circle…" : "Start Circle (All Seats Filled)"}
                 </button>
               )}
 
-              {/* Waiting for seats to fill */}
-              {status === 0 && isMember && members.length < Number(maxMembers) && (
-                <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400 font-medium">
-                  Waiting for members to join ({members.length}/{maxMembers.toString()} spots filled)
-                </div>
-              )}
-
-              {/* Contribute Button */}
               {status === 1 && isMember && !userHasPaid && (
                 <Link href={`/club/${clubId}/contribute`} className="w-full">
-                  <button className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-base transition-all shadow-md flex items-center justify-center gap-2">
-                    <span>⚡</span> Contribute {formatUnits(contribution, decimals)} {tokenLabel(token)} (Gasless)
+                  <button className="w-full btn-green !py-3.5 text-base font-bold shadow-md flex items-center justify-center gap-2">
+                    <span>⚡</span> Contribute {formatUnits(contribution, decimals)} {symbol} (Gasless)
                   </button>
                 </Link>
               )}
 
-              {/* Already Paid */}
-              {status === 1 && isMember && userHasPaid && !allPaid && (
-                <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400 font-medium flex items-center justify-center gap-1.5">
-                  <span className="text-green-500 font-bold">✓</span> You paid this round! Waiting for remaining members…
-                </div>
-              )}
-
-              {/* Trigger Payout */}
               {status === 1 && allPaid && cycleEnded && (
                 <button
                   onClick={handleTrigger}
                   disabled={isTriggering}
-                  className="w-full py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold text-base transition-all shadow-md"
+                  className="w-full btn-green !py-3.5 text-base font-bold shadow-md"
                 >
-                  {isTriggering ? "Sending Payout…" : "Trigger Payout"}
+                  {isTriggering ? "Sending Payout…" : "Trigger Round Payout"}
                 </button>
               )}
 
-              {/* Completed */}
               {status === 2 && (
-                <div className="text-center py-2 text-xs text-gray-500 dark:text-gray-400 font-medium">
+                <p className="text-center text-xs text-slate-500 py-1 font-semibold">
                   This circle has completed all rounds.
-                </div>
+                </p>
               )}
             </>
           )}

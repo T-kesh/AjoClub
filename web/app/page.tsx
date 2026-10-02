@@ -2,14 +2,13 @@
 
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { useAccount, useReadContract } from "wagmi";
+import { Logo } from "@/components/Logo";
+import { useReadContract } from "wagmi";
 import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI } from "@/lib/contract";
-import { WalletConnect } from "@/components/WalletConnect";
 import { useEffect, useState } from "react";
 import { requestNotificationPermission } from "@/lib/notifications";
 
 export default function Home() {
-  const { isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
   const [showNotificationPrompt, setShowNotificationPrompt] = useState(false);
 
@@ -37,152 +36,188 @@ export default function Home() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center p-6">
-        <div className="text-5xl animate-bounce">🫙</div>
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] flex flex-col items-center justify-center">
+        <Logo size="lg" iconOnly className="animate-pulse" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] text-[#1F2937] dark:text-gray-100 flex flex-col transition-colors">
       <Navbar />
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-12 sm:py-16 flex flex-col items-center text-center">
-        {/* Network Badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold mb-6 shadow-sm">
-          <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-          Live on Base Sepolia · Gasless USDC ROSCAs
-        </div>
+      <main className="flex-1">
+        {/* Hero Section */}
+        <section className="mesh overflow-hidden border-b border-slate-200/50 dark:border-[#164738]/50">
+          <div className="container-app grid min-h-[640px] items-center gap-12 py-12 lg:py-16 lg:grid-cols-[1.1fr_.9fr]">
+            {/* Left Content */}
+            <div className="text-left">
+              <span className="eyebrow">
+                <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+                Onchain Rotating Savings Clubs · Base Sepolia
+              </span>
 
-        {/* Hero Title */}
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-2xl leading-[1.1] mb-6">
-          Rotating Savings Circles,{" "}
-          <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-            Supercharged on Base
-          </span>
-        </h1>
+              <h1 className="mt-6 max-w-2xl text-5xl font-extrabold leading-[1.02] tracking-[-0.05em] text-[#0B3D2E] dark:text-white sm:text-6xl lg:text-7xl">
+                Save Together.<br />
+                <span className="text-[#22C55E]">Take Turns.</span>
+              </h1>
 
-        {/* Subtitle */}
-        <p className="text-base sm:text-xl text-gray-600 dark:text-gray-400 max-w-xl mb-10 leading-relaxed">
-          Form trustless savings groups with friends or coworkers. Contribute USDC every cycle and claim the entire pot when your turn arrives.
-        </p>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                Join or create a savings club. Contribute a fixed amount each cycle and one member receives the full pot. No banker. No trust required.
+              </p>
 
-        {/* Notification prompt if permission default */}
-        {showNotificationPrompt && (
-          <div className="rounded-2xl border border-blue-200 dark:border-blue-800 bg-blue-50/80 dark:bg-blue-950/40 p-4 mb-8 w-full max-w-md backdrop-blur">
-            <p className="text-sm text-blue-800 dark:text-blue-200 mb-3 font-medium">
-              🔔 Enable round & contribution reminders on this device?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleEnableNotifications}
-                className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors shadow-sm"
-              >
-                Enable Notifications
-              </button>
-              <button
-                onClick={() => setShowNotificationPrompt(false)}
-                className="flex-1 py-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        )}
+              {/* Notification Prompt if applicable */}
+              {showNotificationPrompt && (
+                <div className="mt-6 rounded-2xl border border-green-200 dark:border-green-800 bg-white/80 dark:bg-[#0B2F28]/80 p-4 max-w-md shadow-sm backdrop-blur">
+                  <p className="text-sm font-semibold text-[#0B3D2E] dark:text-green-300 mb-2">
+                    🔔 Enable round & contribution reminders?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleEnableNotifications}
+                      className="btn-green !py-1.5 !px-3 !text-xs !font-bold"
+                    >
+                      Enable
+                    </button>
+                    <button
+                      onClick={() => setShowNotificationPrompt(false)}
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-3 py-1.5"
+                    >
+                      Later
+                    </button>
+                  </div>
+                </div>
+              )}
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full max-w-md mb-12">
-          <Link href="/clubs" className="w-full sm:w-1/2">
-            <button className="w-full py-3.5 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.99] text-white font-bold text-base transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2">
-              <span>🔍</span> Browse Circles
-            </button>
-          </Link>
-          <Link href="/create" className="w-full sm:w-1/2">
-            <button className="w-full py-3.5 px-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/80 text-gray-900 dark:text-gray-100 font-bold text-base transition-all shadow-sm">
-              <span>+</span> Create Circle
-            </button>
-          </Link>
-        </div>
+              {/* CTAs */}
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                <Link href="/create" className="btn-green text-base px-6 py-3.5 shadow-md">
+                  Create a Club <span className="ml-1">→</span>
+                </Link>
+                <Link href="/clubs" className="btn-secondary text-base px-6 py-3.5">
+                  Browse Clubs
+                </Link>
+              </div>
 
-        {/* Smart Wallet Card if disconnected */}
-        {!isConnected && (
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 p-5 mb-14 shadow-sm text-left flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">🔑</span>
-              <div>
-                <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                  Coinbase Smart Wallet
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Instant passkey sign-in. No extension or app required.
-                </p>
+              {/* Trust Badges */}
+              <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#22C55E] font-bold">✓</span> Base Sepolia L2
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#22C55E] font-bold">✓</span> Coinbase Smart Wallet
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#22C55E] font-bold">✓</span> Paymaster Gasless
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[#22C55E] font-bold">✓</span> Native USDC
+                </span>
               </div>
             </div>
-            <WalletConnect />
-          </div>
-        )}
 
-        {/* Feature Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-3xl text-left mb-16">
-          <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 shadow-sm">
-            <div className="text-2xl mb-2">⚡</div>
-            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
-              Gasless Contributions
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Sponsored by CDP Paymaster. Approve and deposit in a single tap without needing ETH.
-            </p>
-          </div>
+            {/* Right Graphic: Illustrated circular interactive pot */}
+            <div className="relative flex justify-center items-center py-6">
+              {/* Glow backdrop */}
+              <div className="absolute h-80 w-80 rounded-full bg-green-300/30 dark:bg-green-500/10 blur-3xl pointer-events-none" />
 
-          <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 shadow-sm">
-            <div className="text-2xl mb-2">🆔</div>
-            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
-              Basenames & OnchainKit
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Rosters automatically resolve member .base.eth names and verified avatars.
-            </p>
-          </div>
+              {/* Glass disk container */}
+              <div className="relative grid h-[360px] w-[360px] sm:h-[420px] sm:w-[420px] place-items-center rounded-full border border-green-200/80 dark:border-green-800/60 bg-white/70 dark:bg-[#0A2920]/80 shadow-[0_30px_100px_rgba(11,61,46,.12)] dark:shadow-[0_30px_100px_rgba(0,0,0,.5)] backdrop-blur">
+                {/* Floating feature pills */}
+                <div className="absolute -top-3 left-6 sm:left-10 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform -rotate-3 hover:rotate-0 transition-transform cursor-default">
+                  <span>💰</span> Contribute USDC
+                </div>
+                <div className="absolute right-0 sm:-right-2 top-24 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform rotate-3 hover:rotate-0 transition-transform cursor-default">
+                  <span>🔄</span> Rotate Payouts
+                </div>
+                <div className="absolute bottom-16 -left-2 sm:left-0 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform rotate-2 hover:rotate-0 transition-transform cursor-default">
+                  <span>⚡</span> Gasless Paymaster
+                </div>
+                <div className="absolute -bottom-3 right-8 sm:right-12 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform -rotate-2 hover:rotate-0 transition-transform cursor-default">
+                  <span>✓</span> Trustless Smart Contract
+                </div>
 
-          <div className="p-5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900/60 shadow-sm">
-            <div className="text-2xl mb-2">🤖</div>
-            <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 mb-1">
-              Automated Payouts
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-              Autonomous daemon monitors cycles, records payments, and triggers payouts.
-            </p>
+                {/* Center Big Logo */}
+                <div className="transform hover:scale-105 transition-transform duration-300">
+                  <Logo size="lg" iconOnly />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Contract Info / Live Stat Banner */}
-        <div className="w-full max-w-3xl rounded-2xl bg-gray-100/80 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600 dark:text-gray-400">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-800 dark:text-gray-200">
-              Circles Created:
-            </span>
-            <span className="font-bold text-blue-600 dark:text-blue-400 font-mono">
-              {clubCount !== undefined ? clubCount.toString() : "…"}
-            </span>
+        {/* 4 Stats Grid */}
+        <section className="container-app py-12">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {[
+              ["100%", "On-chain & Trustless", "Contract enforces round payouts"],
+              ["USDC", "Native Stablecoin", "6-decimal digital dollar"],
+              ["1-Tap", "Passkey Smart Wallet", "Zero seed phrases or extensions"],
+              ["∞", "Rotating Cycles", "Automated multi-member rounds"],
+            ].map(([value, label, sub]) => (
+              <div key={label} className="card p-6 text-center hover:border-green-300 dark:hover:border-green-700 transition-colors">
+                <div className="text-3xl font-extrabold text-[#0B3D2E] dark:text-[#22C55E]">
+                  {value}
+                </div>
+                <div className="mt-1 font-bold text-sm text-slate-800 dark:text-slate-100">
+                  {label}
+                </div>
+                <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  {sub}
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="flex items-center gap-4">
-            <a
-              href={`https://sepolia.basescan.org/address/${AJO_CLUB_ADDRESS}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-mono"
-            >
-              Contract: {AJO_CLUB_ADDRESS.slice(0, 6)}…{AJO_CLUB_ADDRESS.slice(-4)} ↗
-            </a>
-            <span>•</span>
-            <span>USDC 6 Decimals</span>
+        </section>
+
+        {/* How It Works Banner */}
+        <section className="container-app pb-16">
+          <div className="card overflow-hidden bg-[#0B3D2E] dark:bg-[#061C15] p-8 sm:p-12 text-white shadow-xl grid gap-8 md:grid-cols-[1fr_auto] md:items-center border border-green-800/40">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[.18em] text-[#22C55E]">
+                How It Works
+              </p>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight">
+                A familiar savings tradition, supercharged on Base.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm sm:text-base leading-relaxed text-white/80">
+                Create a circle, invite verified members, contribute USDC each cycle with gasless paymaster sponsorship, and claim the entire pot when your round arrives.
+              </p>
+            </div>
+            <Link href="/clubs" className="btn-green text-base px-6 py-3.5 shrink-0 whitespace-nowrap">
+              Explore Clubs →
+            </Link>
           </div>
-        </div>
+        </section>
+
+        {/* Live Contract Details Bar */}
+        <section className="container-app pb-16">
+          <div className="rounded-2xl bg-white dark:bg-[#0B2F28] border border-slate-200 dark:border-[#164738] p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400 shadow-sm">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-[#0B3D2E] dark:text-white">Active Onchain Circles:</span>
+              <span className="font-bold text-[#22C55E] text-sm font-mono">
+                {clubCount !== undefined ? clubCount.toString() : "…"}
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <a
+                href={`https://sepolia.basescan.org/address/${AJO_CLUB_ADDRESS}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#0B7A4B] dark:text-[#22C55E] hover:underline font-mono"
+              >
+                Contract: {AJO_CLUB_ADDRESS.slice(0, 6)}…{AJO_CLUB_ADDRESS.slice(-4)} ↗
+              </a>
+              <span>•</span>
+              <span>Base Sepolia (84532)</span>
+            </div>
+          </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-gray-200 dark:border-gray-800 py-6 text-center text-xs text-gray-400 dark:text-gray-500">
-        <p>AjoClub · Onchain Rotating Savings Circles on Base Sepolia</p>
+      <footer className="w-full border-t border-slate-200/80 dark:border-[#164738]/80 py-6 text-center text-xs text-slate-400 dark:text-slate-500 bg-white/50 dark:bg-[#061C15]/50">
+        <p>AjoClub · Onchain Rotating Savings Circles (ROSCAs) on Base</p>
       </footer>
     </div>
   );

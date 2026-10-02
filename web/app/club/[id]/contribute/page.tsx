@@ -89,10 +89,11 @@ export default function ContributePage() {
 
   if (isLoading || !club) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
         <Navbar />
-        <main className="max-w-md mx-auto p-6 text-center text-gray-400 dark:text-gray-500 pt-20">
-          Loading circle details…
+        <main className="container-app py-20 text-center flex flex-col items-center">
+          <div className="w-8 h-8 border-3 border-[#22C55E] border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm font-semibold text-slate-500">Loading contribution details…</p>
         </main>
       </div>
     );
@@ -100,13 +101,13 @@ export default function ContributePage() {
 
   const [name, token, contribution] = club;
   const decimals = tokenDecimals(token);
+  const symbol = tokenLabel(token);
+  const formattedAmount = formatUnits(contribution, decimals);
   const needsApprove = allowance === undefined || allowance < contribution;
-  const isSmartWallet = connector?.id === "coinbaseWalletSDK" || connector?.name?.toLowerCase().includes("coinbase");
 
   // Handler for Gasless 1-Tap contribution via Paymaster (ERC-5792)
   async function handleGaslessPay() {
     if (!paymasterUrl) {
-      // Fallback if paymaster is unconfigured
       return handleStandardPay();
     }
     setError(null);
@@ -143,14 +144,12 @@ export default function ContributePage() {
         },
       });
     } catch (e: unknown) {
-      console.warn("Gasless sendCalls failed or unsupported, falling back to standard flow:", e);
-      // If user rejected or method not supported, attempt standard flow or show error
+      console.warn("Gasless sendCalls failed, attempting standard flow:", e);
       const msg = (e as Error)?.message || "";
       if (msg.includes("rejected") || msg.includes("User denied")) {
         setError("Transaction cancelled by user.");
         setStep("idle");
       } else {
-        // Fallback to standard flow
         return handleStandardPay();
       }
     }
@@ -186,41 +185,37 @@ export default function ContributePage() {
   // Success view
   if (step === "done") {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
         <Navbar />
-        <main className="max-w-md mx-auto p-6 flex flex-col items-center justify-center text-center pt-16">
-          <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-300 flex items-center justify-center text-3xl mb-4 shadow-sm">
-            ✓
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Contribution Recorded!</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
-            Your {formatUnits(contribution, decimals)} {tokenLabel(token)} deposit has been verified onchain.
-          </p>
+        <main className="container-app py-16 flex flex-col items-center justify-center text-center">
+          <div className="card p-8 sm:p-10 max-w-md w-full flex flex-col items-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-950/60 text-[#22C55E] flex items-center justify-center text-3xl mb-4 shadow-sm">
+              ✓
+            </div>
+            <h1 className="text-2xl font-extrabold text-[#0B3D2E] dark:text-white mb-2">
+              Contribution Sent!
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Your {formattedAmount} {symbol} contribution has been recorded on Base Sepolia.
+            </p>
 
-          {txHash && (
-            <a
-              href={`https://sepolia.basescan.org/tx/${txHash}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-mono text-blue-600 dark:text-blue-400 underline mb-8 block hover:text-blue-700"
-            >
-              View on Basescan ↗
-            </a>
-          )}
+            {txHash && (
+              <a
+                href={`https://sepolia.basescan.org/tx/${txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-[#0B7A4B] dark:text-[#22C55E] underline mb-8 block"
+              >
+                View on Basescan ↗
+              </a>
+            )}
 
-          <div className="flex flex-col gap-3 w-full">
             <button
               onClick={() => router.push(`/club/${id}`)}
-              className="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-md transition-colors"
+              className="btn-green w-full py-3.5 text-base font-bold shadow-md"
             >
-              Back to Circle
+              Back to Club Dashboard
             </button>
-            <Link
-              href="/clubs"
-              className="w-full py-3 rounded-2xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium text-sm text-center hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
-            >
-              Browse Other Circles
-            </Link>
           </div>
         </main>
       </div>
@@ -230,113 +225,145 @@ export default function ContributePage() {
   const isBusy = step === "gasless_sending" || step === "approving" || step === "contributing";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] text-[#1F2937] dark:text-gray-100 flex flex-col transition-colors">
       <Navbar />
 
-      <main className="max-w-md mx-auto p-6 flex flex-col items-center">
-        <button
-          onClick={() => router.back()}
-          className="self-start text-sm text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
-        >
-          ← Back to Circle
-        </button>
+      <main className="container-app py-10 flex-1">
+        <div className="mx-auto max-w-xl">
+          <Link
+            href={`/club/${id}`}
+            className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-[#0B3D2E] dark:hover:text-white inline-flex items-center gap-1.5 transition-colors"
+          >
+            ← Back to club
+          </Link>
 
-        {/* Card */}
-        <div className="w-full rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm flex flex-col items-center text-center">
-          <div className="text-4xl mb-3">🫙</div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">{name}</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold mb-6">
-            Cycle Contribution
-          </p>
-
-          <div className="text-4xl font-extrabold text-blue-600 dark:text-blue-400 mb-2">
-            {formatUnits(contribution, decimals)} {tokenLabel(token)}
-          </div>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mb-6">
-            USDC on Base Sepolia · 6 Decimals
-          </p>
-
-          {/* Paymaster Sponsorship Banner */}
-          {paymasterUrl && (
-            <div className="w-full rounded-2xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 border border-blue-200 dark:border-blue-800/60 p-3 mb-6 flex items-center justify-between text-left">
-              <div className="flex items-center gap-2.5">
-                <span className="text-xl">⚡</span>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                    Paymaster Sponsored
-                  </span>
-                  <span className="text-[11px] text-gray-500 dark:text-gray-400">
-                    0 gas fees · Batched approve + contribute in 1 tap
-                  </span>
-                </div>
+          {/* Card matching mockup */}
+          <div className="card mt-5 p-6 sm:p-8">
+            <div className="flex items-center gap-3.5 mb-6">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-sm shrink-0">
+                🫙
               </div>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300">
-                Gasless
-              </span>
+              <div>
+                <h1 className="text-xl font-extrabold text-[#0B3D2E] dark:text-white">
+                  Contribute
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                  {name} · {symbol} · {formattedAmount} {symbol}
+                </p>
+              </div>
             </div>
-          )}
 
-          {/* Wallet check */}
-          {!isConnected ? (
-            <div className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 text-center">
-              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Wallet Not Connected
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Please connect your Smart Wallet or injected wallet using the button at the top right.
-              </p>
+            {/* Contribution Amount Field */}
+            <div className="mb-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                Contribution Amount
+              </label>
+              <div className="relative">
+                <input
+                  className="input text-xl font-extrabold !text-[#0B3D2E] dark:!text-white pr-16"
+                  value={formattedAmount}
+                  readOnly
+                />
+                <span className="absolute right-4 top-3.5 text-xs font-bold text-slate-400">
+                  {symbol}
+                </span>
+              </div>
             </div>
-          ) : (
-            <>
-              {(error || contributeError) && (
-                <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 rounded-xl p-3 mb-4 w-full text-center border border-red-100 dark:border-red-900">
-                  {error ?? (contributeError ? friendlyError(contributeError as Error) : "Transaction failed")}
-                </div>
-              )}
 
-              {/* Action buttons */}
-              {paymasterUrl ? (
-                <div className="flex flex-col gap-2.5 w-full">
-                  <button
-                    onClick={handleGaslessPay}
-                    disabled={isBusy}
-                    className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 active:scale-[0.99] disabled:opacity-50 text-white font-bold text-base transition-all shadow-md flex items-center justify-center gap-2"
+            {/* Quick amounts indicator pills */}
+            <div className="mt-3 flex gap-2 mb-6">
+              {["10", "25", "50", "100"].map((amt) => {
+                const isSelected = formattedAmount === amt;
+                return (
+                  <div
+                    key={amt}
+                    className={`flex-1 rounded-xl border py-2 text-center text-xs font-bold transition-all ${
+                      isSelected
+                        ? "border-[#22C55E] bg-green-50 dark:bg-green-950/40 text-[#0B7A4B] dark:text-green-300 shadow-sm"
+                        : "border-slate-200 dark:border-[#164738] bg-white dark:bg-[#071F17] text-slate-400"
+                    }`}
                   >
-                    {step === "gasless_sending" ? (
-                      <>
-                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Processing Gasless Contribution…
-                      </>
-                    ) : (
-                      <>
-                        <span>⚡</span> One-Tap Gasless Pay ({formatUnits(contribution, decimals)} USDC)
-                      </>
-                    )}
-                  </button>
+                    ${amt}
+                  </div>
+                );
+              })}
+            </div>
 
-                  <button
-                    onClick={handleStandardPay}
-                    disabled={isBusy}
-                    className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-1 transition-colors underline"
-                  >
-                    {needsApprove ? "Use standard 2-step wallet flow instead" : "Use standard wallet transfer"}
-                  </button>
-                </div>
-              ) : (
+            {/* Token Selector */}
+            <div className="mb-6">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                Token
+              </label>
+              <select className="input text-sm font-semibold" value={token} disabled>
+                <option value={token}>
+                  {symbol} (Base Sepolia · 6 Decimals)
+                </option>
+              </select>
+            </div>
+
+            {/* Error prompt */}
+            {(error || contributeError) && (
+              <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 mb-5 text-xs font-semibold text-red-700 dark:text-red-300 text-center">
+                {error ?? (contributeError ? friendlyError(contributeError as Error) : "Transaction failed")}
+              </div>
+            )}
+
+            {/* Action Button */}
+            {!isConnected ? (
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 border border-slate-200 dark:border-[#164738] text-center">
+                <p className="text-xs text-slate-500 font-medium">
+                  Connect your wallet at the top right to make this contribution.
+                </p>
+              </div>
+            ) : paymasterUrl ? (
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleGaslessPay}
+                  disabled={isBusy}
+                  className="btn-green w-full !py-4 text-base font-bold shadow-md flex items-center justify-center gap-2"
+                >
+                  {step === "gasless_sending" ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-[#0B3D2E] border-t-transparent rounded-full animate-spin" />
+                      Sponsoring Gasless Contribution…
+                    </>
+                  ) : (
+                    <>
+                      <span>⚡</span> Approve & Contribute (Gasless 1-Tap)
+                    </>
+                  )}
+                </button>
+
                 <button
                   onClick={handleStandardPay}
                   disabled={isBusy}
-                  className="w-full py-4 rounded-2xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-lg transition-colors shadow"
+                  className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 underline py-1 text-center"
                 >
-                  {step === "approving"
-                    ? "Approving USDC Spend…"
-                    : step === "contributing"
-                    ? "Sending Contribution…"
-                    : `Pay ${formatUnits(contribution, decimals)} USDC`}
+                  {needsApprove
+                    ? "Or use standard 2-step wallet flow (Approve then Send)"
+                    : "Or send with standard wallet transfer"}
                 </button>
-              )}
-            </>
-          )}
+              </div>
+            ) : (
+              <button
+                onClick={handleStandardPay}
+                disabled={isBusy}
+                className="btn-green w-full !py-4 text-base font-bold shadow-md"
+              >
+                {step === "approving"
+                  ? "Approving USDC Spend…"
+                  : step === "contributing"
+                  ? "Sending Contribution…"
+                  : `Approve & Contribute (${formattedAmount} ${symbol})`}
+              </button>
+            )}
+
+            {/* Trust badge matching design */}
+            <div className="mt-6 rounded-2xl bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800/60 p-4 text-xs font-semibold text-green-800 dark:text-green-300 flex items-center gap-2.5">
+              <span className="text-base text-[#22C55E]">✓</span>
+              <span>Secure, on-chain. Powered by Base Sepolia and CDP Paymaster.</span>
+            </div>
+          </div>
         </div>
       </main>
     </div>

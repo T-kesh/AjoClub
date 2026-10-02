@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "./Logo";
 import { WalletConnect } from "./WalletConnect";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -9,43 +10,34 @@ export function Navbar() {
   const pathname = usePathname();
 
   const navLinks = [
-    { href: "/clubs", label: "Circles" },
-    { href: "/create", label: "Create Circle" },
+    { href: "/", label: "Home" },
+    { href: "/create", label: "Create Club" },
+    { href: "/clubs", label: "Browse Clubs" },
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-200/80 dark:border-gray-800/80 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md">
-      <div className="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-        {/* Brand */}
-        <Link href="/" className="flex items-center gap-2 group">
-          <span className="text-2xl transform group-hover:scale-110 transition-transform">🫙</span>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-lg text-gray-900 dark:text-gray-100 tracking-tight">
-                AjoClub
-              </span>
-              <span className="text-[10px] font-bold tracking-wider uppercase px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                Base
-              </span>
-            </div>
-            <span className="text-[10px] text-gray-500 dark:text-gray-400 -mt-1 font-medium">
-              Rotating Savings
-            </span>
-          </div>
+    <header className="sticky top-0 z-40 w-full border-b border-slate-200/70 dark:border-[#164738]/80 bg-[#F8FAF6]/90 dark:bg-[#071F17]/90 backdrop-blur-xl transition-colors">
+      <div className="container-app flex h-18 items-center justify-between py-3">
+        {/* Brand Logo */}
+        <Link href="/" aria-label="AjoClub home" className="flex items-center gap-2 group">
+          <Logo size="md" />
+          <span className="hidden sm:inline-flex text-[10px] font-bold tracking-wider uppercase px-2 py-0.5 rounded-full bg-green-100 text-[#0B7A4B] dark:bg-green-950/60 dark:text-green-300 border border-green-200 dark:border-green-800/60 ml-1">
+            Base Sepolia
+          </span>
         </Link>
 
-        {/* Links */}
-        <nav className="hidden sm:flex items-center gap-1">
+        {/* Navigation Links */}
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-colors ${
+                className={`text-sm font-semibold transition-colors ${
                   isActive
-                    ? "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 font-semibold"
-                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
+                    ? "text-[#0B3D2E] dark:text-[#22C55E]"
+                    : "text-slate-500 hover:text-[#0B3D2E] dark:text-slate-400 dark:hover:text-white"
                 }`}
               >
                 {link.label}
@@ -55,7 +47,7 @@ export function Navbar() {
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <ThemeToggle />
           <WalletConnect />
         </div>
@@ -63,3 +55,5 @@ export function Navbar() {
     </header>
   );
 }
+
+export default Navbar;
