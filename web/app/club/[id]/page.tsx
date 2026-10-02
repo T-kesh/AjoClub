@@ -60,13 +60,37 @@ export default function ClubPage() {
     );
   }
 
-  if (isLoading || !club) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
         <Navbar />
         <main className="container-app py-20 text-center flex flex-col items-center">
           <div className="w-8 h-8 border-3 border-[#22C55E] border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-sm font-semibold text-slate-500">Loading club details from Base…</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (!club) {
+    return (
+      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17]">
+        <Navbar />
+        <main className="container-app py-20 text-center flex flex-col items-center">
+          <div className="card p-10 max-w-sm w-full flex flex-col items-center">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-red-50 dark:bg-red-950/40 text-3xl mx-auto mb-4">
+              🫙
+            </div>
+            <h2 className="text-xl font-extrabold text-[#0B3D2E] dark:text-white mb-2">
+              Club Not Found
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Circle #{id} doesn&apos;t exist on Base Sepolia. It may have been cancelled or the ID is incorrect.
+            </p>
+            <Link href="/clubs" className="btn-green px-5 py-2.5 text-sm">
+              Browse All Clubs
+            </Link>
+          </div>
         </main>
       </div>
     );

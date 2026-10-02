@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useState, useMemo } from "react";
 
 export default function ClubsPage() {
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const [filter, setFilter] = useState<"All" | "Active" | "Open" | "My Clubs">("All");
   const [search, setSearch] = useState("");
 
@@ -92,8 +92,23 @@ export default function ClubsPage() {
           </div>
         )}
 
-        {/* Empty state */}
-        {!isLoading && ids.length === 0 && (
+        {/* My Clubs: wallet not connected */}
+        {filter === "My Clubs" && !isConnected && (
+          <div className="card text-center py-16 px-6 mt-8">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 text-3xl mx-auto mb-4">
+              🔌
+            </div>
+            <h3 className="text-lg font-bold text-[#0B3D2E] dark:text-white mb-1">
+              Wallet Not Connected
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+              Connect your wallet using the button in the top right to see your clubs.
+            </p>
+          </div>
+        )}
+
+        {/* Empty state: no clubs on chain at all */}
+        {!isLoading && ids.length === 0 && filter !== "My Clubs" && (
           <div className="card text-center py-16 px-6 mt-8">
             <div className="grid h-16 w-16 place-items-center rounded-2xl bg-green-50 dark:bg-green-950/40 text-3xl mx-auto mb-4">
               🫙
@@ -111,7 +126,7 @@ export default function ClubsPage() {
         )}
 
         {/* Clubs Grid */}
-        {!isLoading && ids.length > 0 && (
+        {!isLoading && ids.length > 0 && !(filter === "My Clubs" && !isConnected) && (
           <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {ids.map((id) => (
               <ClubSummaryItem
