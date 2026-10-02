@@ -21,7 +21,9 @@ export const wagmiConfig = createConfig({
   connectors: [
     coinbaseWallet({
       appName: "AjoClub",
-      preference: "smartWalletOnly",
+      // "all" lets the SDK use the browser extension on testnets (Base Sepolia)
+      // and Smart Wallet passkeys on mainnet. "smartWalletOnly" rejects testnets.
+      preference: "all",
     }),
     injected(),
   ],
