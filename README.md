@@ -239,6 +239,9 @@ npm run bot
 AjoClub provides a modern, responsive web application (`web/`) built with Next.js 14, React 18, Wagmi 2, and `@coinbase/onchainkit`:
 
 ### Key Features
+- **Custom Multi-Wallet Connect Modal:** Streamlined wallet connection with dedicated MetaMask and Base (Coinbase Smart Wallet passkeys & extension) options, live network-switching guard, and connected account dropdown with copy address and Basescan link.
+- **Testnet USDC Faucet Helper & 1-Click Asset Watch:** Zero-friction testnet onboarding displaying live Base Sepolia USDC balance, 1-click token addition to wallet (`wallet_watchAsset`), and direct faucet access to Circle's Base Sepolia USDC faucet. Strictly conditional on testnet so no code changes are required when switching to Base Mainnet.
+- **Visual ROSCA Payout Timeline & Turn Order Queue:** Interactive cycle timeline and member turn sequence on `/club/[id]` displaying completed round disbursements, active round spotlight with recipient identity, live countdown timer, and pot collection progress bar (`X of Y contributed`), with personalized "Your Turn" position indicators.
 - **Coinbase Smart Wallet Passkeys:** 1-tap onboarding using biometric passkeys (FaceID / TouchID / Windows Hello) with zero seed-phrase friction.
 - **Paymaster-Sponsored Gasless Contributions:** Uses ERC-5792 batched calls (`wallet_sendCalls`) via Coinbase Developer Platform (CDP) Paymaster to sponsor gas fees and execute token `approve` + `contribute` in a single atomic tap.
 - **Basename & Identity Resolution:** Roster displays utilize OnchainKit's `<Identity>`, `<Avatar>`, `<Name>`, and `<Address>` components to automatically resolve member `.base.eth` names and verified avatars.
