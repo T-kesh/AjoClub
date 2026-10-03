@@ -122,10 +122,10 @@ export function WalletConnect({ className }: WalletConnectProps) {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="btn-primary !px-4 !py-2.5 !text-sm !rounded-2xl flex items-center gap-2 shadow-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="btn-primary !px-3 sm:!px-4 !py-2 sm:!py-2.5 !text-xs sm:!text-sm !rounded-2xl flex items-center gap-1.5 sm:gap-2 shadow-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
           >
-            <WalletIcon className="w-4 h-4" />
-            <span>Connect Wallet</span>
+            <WalletIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+            <span><span className="hidden xs:inline">Connect </span>Wallet</span>
           </button>
 
           {/* Modal Overlay via Portal */}
@@ -252,10 +252,10 @@ export function WalletConnect({ className }: WalletConnectProps) {
           type="button"
           disabled={isSwitching}
           onClick={() => switchChain({ chainId: baseSepolia.id })}
-          className="px-3.5 py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition-all"
+          className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all shrink-0"
         >
-          <WarningIcon className="w-4 h-4" />
-          <span>{isSwitching ? "Switching..." : "Switch to Base Sepolia"}</span>
+          <WarningIcon className="w-3.5 h-3.5 shrink-0" />
+          <span><span className="hidden xs:inline">{isSwitching ? "Switching..." : "Switch to "}</span>{isSwitching ? "Switching..." : "Base"}</span>
         </button>
       ) : (
         /* ── CONNECTED: Account Button & Dropdown ── */
@@ -263,10 +263,10 @@ export function WalletConnect({ className }: WalletConnectProps) {
           <button
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-2.5 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-[#164738] bg-white dark:bg-[#0B2F28] hover:border-emerald-400 dark:hover:border-emerald-500 transition-all shadow-sm"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-[#164738] bg-white dark:bg-[#0B2F28] hover:border-emerald-400 dark:hover:border-emerald-500 transition-all shadow-sm shrink-0"
           >
             {/* Status dot */}
-            <span className="relative flex h-2 w-2">
+            <span className="relative flex h-2 w-2 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
@@ -283,12 +283,12 @@ export function WalletConnect({ className }: WalletConnectProps) {
               </span>
             )}
 
-            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronDownIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           </button>
 
           {/* Account Dropdown Menu */}
           {dropdownOpen && (
-            <div className="absolute right-0 mt-2 w-72 rounded-3xl bg-white dark:bg-[#0B2F28] border border-slate-200 dark:border-[#164738] shadow-2xl p-3 z-50 animate-fade-in">
+            <div className="absolute right-0 mt-2 w-[calc(100vw-32px)] sm:w-72 max-w-sm rounded-3xl bg-white dark:bg-[#0B2F28] border border-slate-200 dark:border-[#164738] shadow-2xl p-3 z-50 animate-fade-in">
               {/* Account Info Card */}
               <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#08221D] border border-slate-100 dark:border-[#164738] mb-2">
                 <div className="flex items-center justify-between">

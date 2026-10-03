@@ -84,15 +84,15 @@ export function InteractiveLifecycleWheel() {
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center py-6 select-none"
+      className="relative flex flex-col items-center justify-center py-4 sm:py-6 select-none overflow-hidden max-w-full w-full"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Background radial atmosphere glow */}
       <div className="absolute h-96 w-96 rounded-full bg-gradient-to-tr from-green-400/20 via-yellow-300/15 to-emerald-500/20 dark:from-green-500/10 dark:via-emerald-400/10 dark:to-yellow-500/5 blur-3xl pointer-events-none" />
 
-      {/* Main Circular Disc Stage */}
-      <div className="relative grid h-[420px] w-[420px] sm:h-[480px] sm:w-[480px] place-items-center">
+      {/* Main Circular Disc Stage - Scales smoothly on mobile */}
+      <div className="relative grid h-[420px] w-[420px] sm:h-[480px] sm:w-[480px] place-items-center scale-[0.78] xs:scale-[0.88] sm:scale-100 origin-center transition-transform my-[-30px] sm:my-0">
         
         {/* Animated SVG Orbit Ring with Flowing Energy Beam */}
         <svg

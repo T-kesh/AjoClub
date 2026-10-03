@@ -1,13 +1,14 @@
 "use client";
 import { useTheme } from "@/hooks/useTheme";
 
-export function ThemeToggle() {
+export function ThemeToggle({ className = "" }: { className?: string }) {
   const { isDark, toggle } = useTheme();
   return (
     <button
+      type="button"
       onClick={toggle}
       aria-label="Toggle dark mode"
-      className="fixed top-4 right-4 z-50 w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
+      className={`w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-[#0D382D] border border-slate-200 dark:border-[#1E5645] shadow-sm hover:bg-slate-50 dark:hover:bg-[#13493B] text-slate-600 dark:text-yellow-400 transition-colors shrink-0 ${className}`}
     >
       {isDark ? (
         // Sun icon
@@ -17,7 +18,7 @@ export function ThemeToggle() {
         </svg>
       ) : (
         // Moon icon
-        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
         </svg>
       )}

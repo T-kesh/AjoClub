@@ -35,14 +35,6 @@ export default function Home() {
     setShowNotificationPrompt(false);
   };
 
-  if (!mounted) {
-    return (
-      <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] flex flex-col items-center justify-center">
-        <Logo size="lg" iconOnly className="animate-pulse" />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#F8FAF6] dark:bg-[#071F17] text-[#1F2937] dark:text-gray-100 flex flex-col transition-colors">
       <Navbar />
