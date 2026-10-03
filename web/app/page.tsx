@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Logo } from "@/components/Logo";
+import { InteractiveLifecycleWheel } from "@/components/InteractiveLifecycleWheel";
 import { useReadContract } from "wagmi";
 import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI } from "@/lib/contract";
 import { useEffect, useState } from "react";
@@ -116,32 +117,9 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right Graphic: Illustrated circular interactive pot */}
-            <div className="relative flex justify-center items-center py-6">
-              {/* Glow backdrop */}
-              <div className="absolute h-80 w-80 rounded-full bg-green-300/30 dark:bg-green-500/10 blur-3xl pointer-events-none" />
-
-              {/* Glass disk container */}
-              <div className="relative grid h-[360px] w-[360px] sm:h-[420px] sm:w-[420px] place-items-center rounded-full border border-green-200/80 dark:border-green-800/60 bg-white/70 dark:bg-[#0A2920]/80 shadow-[0_30px_100px_rgba(11,61,46,.12)] dark:shadow-[0_30px_100px_rgba(0,0,0,.5)] backdrop-blur">
-                {/* Floating feature pills */}
-                <div className="absolute -top-3 left-6 sm:left-10 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform -rotate-3 hover:rotate-0 transition-transform cursor-default">
-                  <span>💰</span> Contribute USDC
-                </div>
-                <div className="absolute right-0 sm:-right-2 top-24 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform rotate-3 hover:rotate-0 transition-transform cursor-default">
-                  <span>🔄</span> Rotate Payouts
-                </div>
-                <div className="absolute bottom-16 -left-2 sm:left-0 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform rotate-2 hover:rotate-0 transition-transform cursor-default">
-                  <span>⚡</span> Gasless Paymaster
-                </div>
-                <div className="absolute -bottom-3 right-8 sm:right-12 rounded-2xl bg-white dark:bg-[#0D382D] border border-slate-200/70 dark:border-[#164738] px-4 py-2.5 shadow-lg text-xs font-bold text-[#0B3D2E] dark:text-white flex items-center gap-2 transform -rotate-2 hover:rotate-0 transition-transform cursor-default">
-                  <span>✓</span> Trustless Smart Contract
-                </div>
-
-                {/* Center Big Logo */}
-                <div className="transform hover:scale-105 transition-transform duration-300">
-                  <Logo size="lg" iconOnly />
-                </div>
-              </div>
+            {/* Right Graphic: Interactive 3D Lifecycle Rotating Wheel */}
+            <div className="relative flex justify-center items-center py-4">
+              <InteractiveLifecycleWheel />
             </div>
           </div>
         </section>

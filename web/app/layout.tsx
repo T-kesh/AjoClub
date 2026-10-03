@@ -12,10 +12,23 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://ajoclub.xyz"),
   title: "AjoClub | Save Together. Take Turns.",
   description: "Onchain rotating savings clubs (ROSCAs) powered by Base, Coinbase Smart Wallet, and USDC.",
   icons: {
     icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "AjoClub | Save Together. Take Turns.",
+    description: "Onchain rotating savings clubs (ROSCAs) powered by Base, Coinbase Smart Wallet, and USDC.",
+    images: [{ url: "/images/og-image.png", width: 1200, height: 630, alt: "AjoClub" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AjoClub | Save Together. Take Turns.",
+    description: "Onchain rotating savings clubs (ROSCAs) powered by Base, Coinbase Smart Wallet, and USDC.",
+    images: ["/images/og-image.png"],
   },
 };
 
