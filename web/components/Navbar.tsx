@@ -45,8 +45,8 @@ export function Navbar() {
           </span>
         </Link>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-7 lg:gap-8">
+        {/* Desktop Navigation Links (Desktop viewports: lg and up) */}
+        <nav className="hidden lg:flex items-center gap-7 xl:gap-8">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -67,17 +67,21 @@ export function Navbar() {
 
         {/* Actions Container */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          <ThemeToggle className="hidden sm:flex" />
+          {/* Desktop Theme Toggle: Only rendered on desktop viewports (lg and up) */}
+          <div className="hidden lg:flex items-center">
+            <ThemeToggle />
+          </div>
+
           <WalletConnect />
 
-          {/* Mobile Hamburger Button - Guaranteed visible on mobile with shrink-0 */}
+          {/* Mobile & Tablet Hamburger Button - Visible on all screens < lg */}
           <button
             id="mobile-menu-toggle"
             type="button"
-            aria-label="Toggle mobile menu"
+            aria-label="Toggle navigation menu"
             aria-expanded={mobileOpen}
             onClick={() => setMobileOpen((v) => !v)}
-            className="md:hidden flex flex-col justify-center items-center w-9 h-9 rounded-xl border border-slate-200 dark:border-[#1E5645] bg-white dark:bg-[#0D382D] gap-[5px] transition-all hover:bg-slate-50 dark:hover:bg-[#13493B] shrink-0 active:scale-95 shadow-sm"
+            className="lg:hidden flex flex-col justify-center items-center w-9 h-9 rounded-xl border border-slate-200 dark:border-[#1E5645] bg-white dark:bg-[#0D382D] gap-[5px] transition-all hover:bg-slate-50 dark:hover:bg-[#13493B] shrink-0 active:scale-95 shadow-sm"
           >
             <span
               className={`block h-0.5 w-4 bg-[#0B3D2E] dark:bg-white rounded-full transition-all duration-200 origin-center ${
@@ -98,9 +102,9 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile & Tablet Drawer Menu - Covers all screens < lg */}
       <div
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-slate-100 dark:border-[#164738]/60 bg-white/95 dark:bg-[#061E16]/95 backdrop-blur-xl ${
+        className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-slate-100 dark:border-[#164738]/60 bg-white/95 dark:bg-[#061E16]/95 backdrop-blur-xl ${
           mobileOpen ? "max-h-[500px] opacity-100 shadow-xl" : "max-h-0 opacity-0 pointer-events-none"
         }`}
       >

@@ -115,7 +115,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const shortAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "";
 
   return (
-    <div className={`relative ${className ?? ""}`}>
+    <div id="wallet-connect-wrapper" className={`relative shrink-0 ${className ?? ""}`}>
       {/* ── NOT CONNECTED: Open Wallet Modal Button ── */}
       {!isConnected ? (
         <>
@@ -125,7 +125,10 @@ export function WalletConnect({ className }: WalletConnectProps) {
             className="btn-primary !px-3 sm:!px-4 !py-2 sm:!py-2.5 !text-xs sm:!text-sm !rounded-2xl flex items-center gap-1.5 sm:gap-2 shadow-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
           >
             <WalletIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-            <span><span className="hidden xs:inline">Connect </span>Wallet</span>
+            <span>
+              <span className="sm:hidden">Connect</span>
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </span>
           </button>
 
           {/* Modal Overlay via Portal */}
@@ -255,7 +258,10 @@ export function WalletConnect({ className }: WalletConnectProps) {
           className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-all shrink-0"
         >
           <WarningIcon className="w-3.5 h-3.5 shrink-0" />
-          <span><span className="hidden xs:inline">{isSwitching ? "Switching..." : "Switch to "}</span>{isSwitching ? "Switching..." : "Base"}</span>
+          <span>
+            <span className="hidden sm:inline">{isSwitching ? "Switching..." : "Switch to "}</span>
+            {isSwitching ? "Switching..." : "Base"}
+          </span>
         </button>
       ) : (
         /* ── CONNECTED: Account Button & Dropdown ── */
@@ -276,9 +282,9 @@ export function WalletConnect({ className }: WalletConnectProps) {
               {shortAddress}
             </span>
 
-            {/* Balance Badge */}
+            {/* Balance Badge - Displayed on desktop (lg and up) to keep mobile & tablet top bar compact */}
             {formattedBalance && (
-              <span className="hidden sm:inline-flex text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#071F17] text-slate-600 dark:text-emerald-300">
+              <span className="hidden lg:inline-flex text-[11px] font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-[#071F17] text-slate-600 dark:text-emerald-300">
                 {formattedBalance}
               </span>
             )}
