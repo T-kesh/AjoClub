@@ -8,6 +8,7 @@ import { SUPPORTED_TOKENS, AJO_CLUB_ABI, tokenDecimals, tokenLabel } from "@/lib
 import { waitForTransactionReceipt } from "@/lib/wagmi";
 import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
+import { TestnetHelper } from "@/components/TestnetHelper";
 import { useAccount } from "wagmi";
 import Link from "next/link";
 
@@ -118,7 +119,9 @@ export default function CreateClubPage() {
             </p>
           </div>
 
-          <div className="card mt-8 p-6 sm:p-8">
+          <TestnetHelper variant="banner" className="mt-6" />
+
+          <div className="card mt-6 p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">

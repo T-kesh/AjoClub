@@ -12,6 +12,7 @@ import {
 } from "wagmi";
 import { baseSepolia } from "wagmi/chains";
 import { formatEther } from "viem";
+import { TestnetHelper } from "./TestnetHelper";
 
 interface WalletConnectProps {
   className?: string;
@@ -307,6 +308,9 @@ export function WalletConnect({ className }: WalletConnectProps) {
                   </div>
                 )}
               </div>
+
+              {/* Testnet USDC Faucet & Balance */}
+              <TestnetHelper variant="compact" className="mb-2" />
 
               {/* Actions */}
               <div className="flex flex-col gap-1">

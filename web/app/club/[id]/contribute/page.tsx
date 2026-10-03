@@ -9,6 +9,7 @@ import { useGetClub, useContribute } from "@/hooks/useAjoClub";
 import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI, tokenLabel, tokenDecimals } from "@/lib/contract";
 import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
+import { TestnetHelper } from "@/components/TestnetHelper";
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 
@@ -239,8 +240,14 @@ export default function ContributePage() {
             ← Back to club
           </Link>
 
+          <TestnetHelper
+            variant="banner"
+            className="mt-4"
+            requiredAmount={formattedAmount}
+          />
+
           {/* Card matching mockup */}
-          <div className="card mt-5 p-6 sm:p-8">
+          <div className="card mt-4 p-6 sm:p-8">
             <div className="flex items-center gap-3.5 mb-6">
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-sm shrink-0">
                 🫙
