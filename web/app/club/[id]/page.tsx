@@ -13,6 +13,8 @@ import {
 import { useAccount } from "wagmi";
 import { tokenLabel, tokenDecimals, AJO_CLUB_ADDRESS } from "@/lib/contract";
 import { MemberList } from "@/components/MemberList";
+import { PayoutTimeline } from "@/components/PayoutTimeline";
+import { TestnetHelper } from "@/components/TestnetHelper";
 import { CountdownTimer } from "@/components/CountdownTimer";
 import { waitForTransactionReceipt } from "@/lib/wagmi";
 import { Navbar } from "@/components/Navbar";
@@ -43,7 +45,7 @@ export default function ClubPage() {
   const { triggerPayout, isPending: isTriggering } = useTriggerPayout();
   const { startClub, isPending: isStarting } = useStartClub();
 
-  const [activeTab, setActiveTab] = useState<"members" | "details" | "activity">("members");
+  const [activeTab, setActiveTab] = useState<"timeline" | "members" | "details" | "activity">("timeline");
   const [actionError, setActionError] = useState<string | null>(null);
 
   if (clubId === undefined) {
@@ -282,6 +284,15 @@ export default function ClubPage() {
               </div>
             </div>
 
+            {/* Testnet Helper prompt if user owes contribution */}
+            {status === 1 && isMember && !userHasPaid && (
+              <TestnetHelper
+                variant="banner"
+                requiredAmount={formatUnits(contribution, decimals)}
+                className="mt-2"
+              />
+            )}
+
             {/* Error prompt */}
             {actionError && (
               <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-4 text-xs font-semibold text-red-700 dark:text-red-300">
@@ -292,41 +303,67 @@ export default function ClubPage() {
             {/* Tabs & Roster Card */}
             <div className="card p-6 sm:p-7">
               {/* Tab Navigation */}
-              <div className="flex gap-8 border-b border-slate-100 dark:border-[#164738] pb-4 text-sm font-bold">
+              <div className="flex flex-wrap gap-4 sm:gap-8 border-b border-slate-100 dark:border-[#164738] pb-4 text-sm font-bold">
+                <button
+                  onClick={() => setActiveTab("timeline")}
+                  className={`transition-colors flex items-center gap-1.5 ${
+                    activeTab === "timeline"
+                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
+                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  }`}
+                >
+                  <span>📅</span> Payout Timeline
+                </button>
                 <button
                   onClick={() => setActiveTab("members")}
-                  className={`transition-colors ${
+                  className={`transition-colors flex items-center gap-1.5 ${
                     activeTab === "members"
                       ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
                       : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   }`}
                 >
-                  Members ({members.length})
+                  <span>👥</span> Members ({members.length})
                 </button>
                 <button
                   onClick={() => setActiveTab("details")}
-                  className={`transition-colors ${
+                  className={`transition-colors flex items-center gap-1.5 ${
                     activeTab === "details"
                       ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
                       : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   }`}
                 >
-                  Details
+                  <span>ℹ️</span> Details
                 </button>
                 <button
                   onClick={() => setActiveTab("activity")}
-                  className={`transition-colors ${
+                  className={`transition-colors flex items-center gap-1.5 ${
                     activeTab === "activity"
                       ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
                       : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   }`}
                 >
-                  Activity
+                  <span>📜</span> Activity
                 </button>
               </div>
 
               {/* Tab Content */}
               <div className="mt-5">
+                {activeTab === "timeline" && (
+                  <PayoutTimeline
+                    members={members}
+                    paid={paid.length > 0 ? paid : Array(members.length).fill(false)}
+                    currentRound={currentRound}
+                    cycleEnd={cycleEnd}
+                    cycleDuration={cycleDuration}
+                    contribution={contribution}
+                    tokenDecimals={decimals}
+                    tokenSymbol={symbol}
+                    status={status}
+                    maxMembers={maxMembers}
+                    userAddress={address}
+                  />
+                )}
+
                 {activeTab === "members" && (
                   <div>
                     {members.length > 0 ? (
