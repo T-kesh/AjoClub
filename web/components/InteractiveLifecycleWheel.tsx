@@ -27,7 +27,7 @@ const steps: StepInfo[] = [
     potState: "📥 Collecting: 5 members × $50 USDC",
     highlightColor: "text-emerald-600 dark:text-emerald-400",
     borderActive: "border-[#22C55E] shadow-[0_15px_30px_-5px_rgba(34,197,94,0.35)] ring-2 ring-[#22C55E]/50",
-    positionClass: "-top-6 -left-2 sm:left-2",
+    positionClass: "-top-3 left-0 sm:-top-6 sm:left-2",
   },
   {
     id: 1,
@@ -39,7 +39,7 @@ const steps: StepInfo[] = [
     potState: "⚡ Gas Fee: $0.00 (Sponsored)",
     highlightColor: "text-amber-500 dark:text-amber-400",
     borderActive: "border-amber-400 shadow-[0_15px_30px_-5px_rgba(250,204,21,0.35)] ring-2 ring-amber-400/50",
-    positionClass: "-top-6 -right-2 sm:right-2",
+    positionClass: "-top-3 right-0 sm:-top-6 sm:right-2",
   },
   {
     id: 2,
@@ -51,7 +51,7 @@ const steps: StepInfo[] = [
     potState: "🔒 Total Pool: $250 USDC Locked",
     highlightColor: "text-cyan-600 dark:text-cyan-400",
     borderActive: "border-cyan-400 shadow-[0_15px_30px_-5px_rgba(6,182,212,0.35)] ring-2 ring-cyan-400/50",
-    positionClass: "-bottom-6 -right-2 sm:right-2",
+    positionClass: "-bottom-3 right-0 sm:-bottom-6 sm:right-2",
   },
   {
     id: 3,
@@ -63,7 +63,7 @@ const steps: StepInfo[] = [
     potState: "🎉 Payout: $250 USDC sent to Member #1",
     highlightColor: "text-purple-600 dark:text-purple-400",
     borderActive: "border-purple-400 shadow-[0_15px_30px_-5px_rgba(168,85,247,0.35)] ring-2 ring-purple-400/50",
-    positionClass: "-bottom-6 -left-2 sm:left-2",
+    positionClass: "-bottom-3 left-0 sm:-bottom-6 sm:left-2",
   },
 ];
 
@@ -89,10 +89,10 @@ export function InteractiveLifecycleWheel() {
       onMouseLeave={() => setIsPaused(false)}
     >
       {/* Background radial atmosphere glow */}
-      <div className="absolute h-96 w-96 rounded-full bg-gradient-to-tr from-green-400/20 via-yellow-300/15 to-emerald-500/20 dark:from-green-500/10 dark:via-emerald-400/10 dark:to-yellow-500/5 blur-3xl pointer-events-none" />
+      <div className="absolute h-72 w-72 sm:h-96 sm:w-96 max-w-full rounded-full bg-gradient-to-tr from-green-400/20 via-yellow-300/15 to-emerald-500/20 dark:from-green-500/10 dark:via-emerald-400/10 dark:to-yellow-500/5 blur-3xl pointer-events-none" />
 
       {/* Main Circular Disc Stage - Scales smoothly on mobile */}
-      <div className="relative grid h-[420px] w-[420px] sm:h-[480px] sm:w-[480px] place-items-center scale-[0.78] xs:scale-[0.88] sm:scale-100 origin-center transition-transform my-[-30px] sm:my-0">
+      <div className="relative grid h-[340px] w-[340px] sm:h-[480px] sm:w-[480px] place-items-center scale-[0.88] sm:scale-100 origin-center transition-transform my-[-10px] sm:my-0">
         
         {/* Animated SVG Orbit Ring with Flowing Energy Beam */}
         <svg

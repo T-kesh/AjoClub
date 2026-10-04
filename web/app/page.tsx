@@ -42,20 +42,20 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="mesh overflow-hidden border-b border-slate-200/50 dark:border-[#164738]/50">
-          <div className="container-app grid min-h-[640px] items-center gap-12 py-12 lg:py-16 lg:grid-cols-[1.1fr_.9fr]">
+          <div className="container-app grid min-h-[580px] lg:min-h-[640px] items-center gap-8 lg:gap-12 py-8 sm:py-12 lg:py-16 lg:grid-cols-[1.1fr_.9fr]">
             {/* Left Content */}
-            <div className="text-left">
-              <span className="eyebrow">
-                <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
-                Onchain Rotating Savings Clubs · Base Sepolia
+            <div className="text-left min-w-0 max-w-full">
+              <span className="eyebrow max-w-full inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
+                <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse shrink-0" />
+                <span className="truncate sm:whitespace-normal">Onchain Rotating Savings Clubs · Base Sepolia</span>
               </span>
 
-              <h1 className="mt-6 max-w-2xl text-5xl font-extrabold leading-[1.02] tracking-[-0.05em] text-[#0B3D2E] dark:text-white sm:text-6xl lg:text-7xl">
+              <h1 className="mt-4 sm:mt-6 max-w-2xl text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-[1.05] tracking-[-0.04em] text-[#0B3D2E] dark:text-white">
                 Save Together.<br />
                 <span className="text-[#22C55E]">Take Turns.</span>
               </h1>
 
-              <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="mt-4 sm:mt-6 max-w-xl text-base sm:text-lg leading-relaxed text-slate-600 dark:text-slate-300">
                 Join or create a savings club. Contribute a fixed amount each cycle and one member receives the full pot. No banker. No trust required.
               </p>
 
@@ -83,25 +83,25 @@ export default function Home() {
               )}
 
               {/* CTAs */}
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link href="/create" className="btn-green text-base px-6 py-3.5 shadow-md">
+              <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                <Link href="/create" className="btn-green text-base px-6 py-3.5 shadow-md text-center">
                   Create a Club <span className="ml-1">→</span>
                 </Link>
-                <Link href="/clubs" className="btn-secondary text-base px-6 py-3.5">
+                <Link href="/clubs" className="btn-secondary text-base px-6 py-3.5 text-center">
                   Browse Clubs
                 </Link>
               </div>
 
               {/* Trust Badges */}
-              <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+              <div className="mt-8 sm:mt-10 grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-2.5 text-xs font-semibold text-slate-500 dark:text-slate-400">
                 <span className="flex items-center gap-1.5">
                   <span className="text-[#22C55E] font-bold">✓</span> Base Sepolia L2
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[#22C55E] font-bold">✓</span> Coinbase Smart Wallet
+                  <span className="text-[#22C55E] font-bold">✓</span> Smart Wallet
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="text-[#22C55E] font-bold">✓</span> Paymaster Gasless
+                  <span className="text-[#22C55E] font-bold">✓</span> Gasless Paymaster
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="text-[#22C55E] font-bold">✓</span> Native USDC
@@ -110,7 +110,7 @@ export default function Home() {
             </div>
 
             {/* Right Graphic: Interactive 3D Lifecycle Rotating Wheel */}
-            <div className="relative flex justify-center items-center py-4">
+            <div className="relative flex justify-center items-center py-2 sm:py-4 min-w-0 max-w-full overflow-hidden sm:overflow-visible">
               <InteractiveLifecycleWheel />
             </div>
           </div>
