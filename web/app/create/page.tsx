@@ -219,8 +219,18 @@ export default function CreateClubPage() {
               </div>
 
               {displayError && (
-                <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-3 text-xs text-red-700 dark:text-red-300 text-center font-semibold">
-                  {displayError}
+                <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 p-4 text-xs text-red-700 dark:text-red-300 text-center font-semibold space-y-2">
+                  <p>{displayError}</p>
+                  {/ETH|gas|network fee|faucet/i.test(displayError) && (
+                    <a
+                      href="https://faucet.base.org/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-sm transition-all"
+                    >
+                      Claim Free Base Sepolia ETH at Faucet ↗
+                    </a>
+                  )}
                 </div>
               )}
 
@@ -250,8 +260,8 @@ export default function CreateClubPage() {
                 </button>
               )}
 
-              <p className="text-center text-xs text-slate-400">
-                You will confirm the transaction with your connected Smart Wallet or browser wallet.
+              <p className="text-center text-[11px] text-slate-400 dark:text-slate-500">
+                💡 <span className="font-semibold">Zero USDC deducted to create.</span> Only a standard testnet gas fee (~0.0001 Base Sepolia ETH) is required by MetaMask to register the circle rules.
               </p>
             </form>
           </div>

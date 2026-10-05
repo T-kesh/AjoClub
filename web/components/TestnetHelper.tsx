@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { IS_TESTNET, TOKENS, tokenDecimals } from "@/lib/contract";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
@@ -25,7 +25,9 @@ export function TestnetHelper({
   const usdcAddress = TOKENS.baseSepolia.USDC;
   const decimals = tokenDecimals(usdcAddress);
 
-  const { data: rawBalance, isLoading } = useTokenBalance(usdcAddress, address);
+  // Balances
+  const { data: rawBalance, isLoading: isUsdcLoading } = useTokenBalance(usdcAddress, address);
+  const { data: ethData, isLoading: isEthLoading } = useBalance({ address });
 
   // If not on testnet, render nothing
   if (!IS_TESTNET) return null;
@@ -37,6 +39,10 @@ export function TestnetHelper({
 
   const numericBalance = rawBalance !== undefined ? Number(formatUnits(rawBalance, decimals)) : 0;
   const isLowBalance = requiredAmount ? numericBalance < parseFloat(requiredAmount) : numericBalance < 1;
+
+  const numericEth = ethData?.value !== undefined ? Number(formatUnits(ethData.value, 18)) : 0;
+  const isLowEth = !!address && !isEthLoading && numericEth < 0.0005;
+  const formattedEth = ethData ? parseFloat(formatUnits(ethData.value, 18)).toFixed(4) : null;
 
   async function addUsdcToMetaMask() {
     if (typeof window === "undefined") return;
@@ -73,31 +79,47 @@ export function TestnetHelper({
   if (variant === "compact") {
     return (
       <div className={`p-3 rounded-2xl bg-emerald-50/70 dark:bg-[#08221D] border border-emerald-100 dark:border-[#164738] ${className}`}>
-        <div className="flex items-center justify-between text-xs mb-2">
+        <div className="flex items-center justify-between text-xs mb-1">
           <span className="font-semibold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Base Sepolia USDC
+            Base Sepolia
           </span>
-          <span className="font-mono font-bold text-[#0B3D2E] dark:text-white">
-            {isLoading ? "..." : `${formattedBalance ?? "0.00"} USDC`}
-          </span>
+          <div className="flex items-center gap-2 font-mono text-[11px] font-bold">
+            <span className="text-[#0B3D2E] dark:text-white">
+              {isUsdcLoading ? "..." : `${formattedBalance ?? "0.00"} USDC`}
+            </span>
+            <span className="text-slate-400">·</span>
+            <span className={isLowEth ? "text-amber-600 dark:text-amber-400" : "text-slate-500 dark:text-slate-300"}>
+              {isEthLoading ? "..." : `${formattedEth ?? "0.0000"} ETH`}
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 pt-1 border-t border-emerald-100/60 dark:border-[#164738]/60 text-[11px]">
-          <a
-            href="https://faucet.circle.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-emerald-700 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1"
-          >
-            Claim 10 USDC ↗
-          </a>
-          <span className="text-slate-300 dark:text-slate-600">·</span>
+        <div className="flex items-center justify-between pt-1 border-t border-emerald-100/60 dark:border-[#164738]/60 text-[11px]">
+          <div className="flex items-center gap-2">
+            <a
+              href="https://faucet.base.org/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-700 dark:text-amber-400 font-semibold hover:underline"
+            >
+              Gas ETH ↗
+            </a>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <a
+              href="https://faucet.circle.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-700 dark:text-emerald-400 font-semibold hover:underline"
+            >
+              USDC ↗
+            </a>
+          </div>
           <button
             type="button"
             onClick={addUsdcToMetaMask}
             className="text-slate-500 dark:text-slate-400 hover:text-emerald-600 font-medium"
           >
-            {addedToWallet ? "✓ Added" : "+ Add to Wallet"}
+            {addedToWallet ? "✓ Added" : "+ Add USDC"}
           </button>
         </div>
       </div>
@@ -106,33 +128,57 @@ export function TestnetHelper({
 
   // ── VARIANT: Banner (used above forms when balance is low) ──
   if (variant === "banner") {
+    const hasAnyIssue = isLowEth || isLowBalance;
     return (
       <div className={`rounded-2xl p-4 border transition-all ${
-        isLowBalance
-          ? "bg-amber-50/80 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/60 text-amber-900 dark:text-amber-200"
+        isLowEth
+          ? "bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/80 text-amber-950 dark:text-amber-100"
+          : isLowBalance
+          ? "bg-blue-50/90 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/60 text-blue-950 dark:text-blue-100"
           : "bg-emerald-50/60 dark:bg-[#08221D] border-emerald-200/80 dark:border-[#164738] text-[#0B3D2E] dark:text-emerald-200"
       } ${className}`}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="text-xl sm:text-2xl mt-0.5">{isLowBalance ? "💡" : "🪙"}</span>
+            <span className="text-xl sm:text-2xl mt-0.5">
+              {isLowEth ? "⛽" : isLowBalance ? "🪙" : "✅"}
+            </span>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="font-bold text-xs sm:text-sm">
-                  {isLowBalance ? "Testnet USDC Required" : "Testnet USDC Available"}
+                  {isLowEth
+                    ? "MetaMask Network Fee (ETH) Needed"
+                    : isLowBalance
+                    ? "Testnet USDC Required"
+                    : "Base Sepolia Testnet Ready"}
                 </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/70 dark:bg-black/30 font-semibold">
-                  Balance: {formattedBalance ?? "0.00"} USDC
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/80 dark:bg-black/40 font-semibold">
+                  Gas ETH: {formattedEth ?? "0.0000"}
+                </span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/80 dark:bg-black/40 font-semibold">
+                  USDC: {formattedBalance ?? "0.00"}
                 </span>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                {isLowBalance
-                  ? `You need Base Sepolia USDC to ${requiredAmount ? `contribute ${requiredAmount} USDC` : "create or join a club"}. Get free test tokens in seconds.`
-                  : "You have testnet USDC on Base Sepolia. You can mint more anytime for testing."}
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                {isLowEth
+                  ? "MetaMask requires free Base Sepolia ETH to pay transaction network fees. Creating a circle costs 0 USDC, but needs ~0.0001 ETH for gas."
+                  : isLowBalance
+                  ? `You need Base Sepolia USDC to ${requiredAmount ? `contribute ${requiredAmount} USDC` : "participate in savings rounds"}. Claim 10 USDC free.`
+                  : "Your wallet has both testnet ETH (for gas fees) and testnet USDC ready."}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
+            {isLowEth && (
+              <a
+                href="https://faucet.base.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
+              >
+                <span>Get Free ETH Gas ↗</span>
+              </a>
+            )}
             <a
               href="https://faucet.circle.com/"
               target="_blank"
@@ -146,7 +192,7 @@ export function TestnetHelper({
               onClick={addUsdcToMetaMask}
               className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#0B2F28] hover:bg-slate-50 border border-slate-200 dark:border-[#164738] text-xs font-semibold transition-colors"
             >
-              {addedToWallet ? "✓ Added" : "+ Add to MetaMask"}
+              {addedToWallet ? "✓ Added" : "+ Add USDC"}
             </button>
           </div>
         </div>
@@ -175,13 +221,21 @@ export function TestnetHelper({
         Testing on Base Sepolia requires both testnet ETH (for gas fees) and testnet USDC (for club deposits). Both are 100% free.
       </p>
 
-      {/* Balance Pill */}
+      {/* Balance Pills */}
       {address && (
-        <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-[#071F17] border border-emerald-100 dark:border-[#164738] mb-4">
-          <span className="text-xs font-medium text-slate-500">Your USDC Balance:</span>
-          <span className="font-mono font-bold text-sm text-[#0B3D2E] dark:text-emerald-300">
-            {isLoading ? "Loading..." : `${formattedBalance ?? "0.00"} USDC`}
-          </span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-[#071F17] border border-emerald-100 dark:border-[#164738]">
+            <span className="text-xs font-medium text-slate-500">USDC Balance:</span>
+            <span className="font-mono font-bold text-sm text-[#0B3D2E] dark:text-emerald-300">
+              {isUsdcLoading ? "Loading..." : `${formattedBalance ?? "0.00"} USDC`}
+            </span>
+          </div>
+          <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-[#071F17] border border-emerald-100 dark:border-[#164738]">
+            <span className="text-xs font-medium text-slate-500">Gas (ETH) Balance:</span>
+            <span className={`font-mono font-bold text-sm ${isLowEth ? "text-amber-600 dark:text-amber-400" : "text-[#0B3D2E] dark:text-emerald-300"}`}>
+              {isEthLoading ? "Loading..." : `${formattedEth ?? "0.0000"} ETH`}
+            </span>
+          </div>
         </div>
       )}
 
