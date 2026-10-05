@@ -97,7 +97,7 @@ export function TestnetHelper({
         <div className="flex items-center justify-between pt-1 border-t border-emerald-100/60 dark:border-[#164738]/60 text-[11px]">
           <div className="flex items-center gap-2">
             <a
-              href="https://faucet.base.org/"
+              href="https://faucet.quicknode.com/base/sepolia"
               target="_blank"
               rel="noopener noreferrer"
               className="text-amber-700 dark:text-amber-400 font-semibold hover:underline"
@@ -171,7 +171,7 @@ export function TestnetHelper({
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
             {isLowEth && (
               <a
-                href="https://faucet.base.org/"
+                href="https://faucet.quicknode.com/base/sepolia"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
@@ -257,7 +257,7 @@ export function TestnetHelper({
         </a>
 
         <a
-          href="https://faucet.base.org/"
+          href="https://faucet.quicknode.com/base/sepolia"
           target="_blank"
           rel="noopener noreferrer"
           className="p-2.5 rounded-xl bg-white dark:bg-[#071F17] hover:bg-emerald-50 dark:hover:bg-[#0D382E] border border-slate-200 dark:border-[#164738] text-left transition-all group flex items-center justify-between"

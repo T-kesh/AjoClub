@@ -223,7 +223,7 @@ export default function CreateClubPage() {
                   <p>{displayError}</p>
                   {/ETH|gas|network fee|faucet/i.test(displayError) && (
                     <a
-                      href="https://faucet.base.org/"
+                      href="https://faucet.quicknode.com/base/sepolia"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-[11px] shadow-sm transition-all"

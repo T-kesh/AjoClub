@@ -4,7 +4,7 @@ export function friendlyError(err: Error): string {
   if (/user rejected|user denied|cancelled/i.test(msg))
     return "Transaction cancelled.";
   if (/insufficient funds for gas|insufficient funds for intrinsic|gas \* price \+ value/i.test(msg))
-    return "Insufficient Base Sepolia ETH in your MetaMask wallet to pay network fees. Claim free testnet ETH at faucet.base.org.";
+    return "Insufficient Base Sepolia ETH in your MetaMask wallet to pay network fees. Claim free testnet ETH at https://faucet.quicknode.com/base/sepolia";
   if (/insufficient funds|insufficient balance/i.test(msg))
     return "Insufficient balance to complete this transaction. Ensure you have Base Sepolia ETH for gas fees and USDC for deposits.";
   if (/Contribution must be > 0/i.test(msg))
