@@ -20,3 +20,11 @@ Treat the README as living documentation: after making major changes to the code
 Keep the documentation professional, clear, well-structured, and consistent with the project's existing terminology, architecture, features, commands, and conventions. Do not document functionality that does not exist, and remove or revise outdated information when the implementation changes.
 
 The README should evolve alongside the codebase rather than becoming stale after major changes.
+
+## Future Plans & Project Analysis Invariant
+Whenever a project analysis is requested, always inspect and bring up the roadmap documented in `future_plans/`.
+
+CRITICAL INVARIANT:
+> **NONE OF THESE PLANS CAN BE CARRIED OUT WITHOUT APPROVAL OF THE MASTER (JOSEPH)**
+
+Always explicitly state this directive in any analysis, report, or discussion of future plans.
