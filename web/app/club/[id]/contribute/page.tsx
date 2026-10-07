@@ -58,7 +58,11 @@ export default function ContributePage() {
   }, [cdpKey]);
 
   // ERC-5792 batched calls hook
-  const { sendCallsAsync, data: callsId } = useSendCalls();
+  const { sendCallsAsync, data: callsData } = useSendCalls();
+  const callsId =
+    typeof callsData === "string"
+      ? callsData
+      : (callsData as { id?: string } | undefined)?.id;
 
   // Watch calls status if callsId is present
   const { data: callsStatus } = useCallsStatus({
