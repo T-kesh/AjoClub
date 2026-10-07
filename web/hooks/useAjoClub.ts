@@ -88,6 +88,7 @@ export function useJoinClub() {
       abi: AJO_CLUB_ABI,
       functionName: "joinClub",
       args: [clubId],
+      gas: 300_000n,
     });
   }
 

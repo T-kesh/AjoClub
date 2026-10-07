@@ -119,6 +119,10 @@ export default function ClubPage() {
 
   async function handleJoin() {
     if (clubId === undefined) return;
+    if (isVerified === false) {
+      setActionError("Identity verification with Self Protocol is required before joining a circle. Please verify your identity first.");
+      return;
+    }
     setActionError(null);
     try {
       const hash = await joinClub(clubId);
@@ -260,13 +264,22 @@ export default function ClubPage() {
                     <span>⚡</span> Contribute (Gasless)
                   </Link>
                 ) : status === 0 && !isMember ? (
-                  <button
-                    onClick={handleJoin}
-                    disabled={isJoining || members.length >= Number(maxMembers)}
-                    className="btn-green disabled:opacity-50 text-center font-bold text-base shadow-sm"
-                  >
-                    {isJoining ? "Joining…" : "Join This Club"}
-                  </button>
+                  isVerified === false ? (
+                    <Link
+                      href={`/verify?returnTo=/club/${clubId}`}
+                      className="btn-primary text-center font-bold text-base shadow-sm flex items-center justify-center gap-2"
+                    >
+                      <span>🛡️</span> Verify to Join
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={handleJoin}
+                      disabled={isJoining || members.length >= Number(maxMembers)}
+                      className="btn-green disabled:opacity-50 text-center font-bold text-base shadow-sm"
+                    >
+                      {isJoining ? "Joining…" : "Join This Club"}
+                    </button>
+                  )
                 ) : (
                   <div className="rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 p-4 border border-slate-100 dark:border-[#164738]/60 flex items-center justify-between">
                     <div>
@@ -291,6 +304,24 @@ export default function ClubPage() {
                 requiredAmount={formatUnits(contribution, decimals)}
                 className="mt-2"
               />
+            )}
+
+            {/* Verification Helper banner if user is unverified */}
+            {status === 0 && !isMember && isVerified === false && (
+              <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs mt-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🛡️</span>
+                  <span className="text-amber-800 dark:text-amber-200 font-medium">
+                    Self Protocol ZK Passport verification is required before joining a circle.
+                  </span>
+                </div>
+                <Link
+                  href={`/verify?returnTo=/club/${clubId}`}
+                  className="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs transition-colors text-center shrink-0"
+                >
+                  Verify Now →
+                </Link>
+              </div>
             )}
 
             {/* Error prompt */}
@@ -467,13 +498,21 @@ export default function ClubPage() {
           ) : (
             <>
               {status === 0 && !isMember && (
-                <button
-                  onClick={handleJoin}
-                  disabled={isJoining || members.length >= Number(maxMembers)}
-                  className="w-full btn-green !py-3.5 text-base font-bold shadow-md"
-                >
-                  {isJoining ? "Joining…" : "Join Circle"}
-                </button>
+                isVerified === false ? (
+                  <Link href={`/verify?returnTo=/club/${clubId}`} className="w-full">
+                    <button className="w-full btn-primary !py-3.5 text-base font-bold shadow-md flex items-center justify-center gap-2">
+                      <span>🛡️</span> Verify Identity to Join Circle
+                    </button>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={handleJoin}
+                    disabled={isJoining || members.length >= Number(maxMembers)}
+                    className="w-full btn-green !py-3.5 text-base font-bold shadow-md"
+                  >
+                    {isJoining ? "Joining…" : "Join Circle"}
+                  </button>
+                )
               )}
 
               {status === 0 && isMember && members.length === Number(maxMembers) && (

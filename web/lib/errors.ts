@@ -5,6 +5,8 @@ export function friendlyError(err: Error): string {
     return "Transaction cancelled.";
   if (/insufficient funds for gas|insufficient funds for intrinsic|gas \* price \+ value/i.test(msg))
     return "Insufficient Base Sepolia ETH in your MetaMask wallet to pay network fees. Claim free testnet ETH at https://faucet.quicknode.com/base/sepolia";
+  if (/exceeds max transaction gas limit/i.test(msg))
+    return "Transaction failed gas estimation. This usually happens when contract requirements are not met (e.g. your wallet is not yet identity-verified, or the club is full).";
   if (/insufficient funds|insufficient balance/i.test(msg))
     return "Insufficient balance to complete this transaction. Ensure you have Base Sepolia ETH for gas fees and USDC for deposits.";
   if (/Contribution must be > 0/i.test(msg))
