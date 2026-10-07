@@ -1,0 +1,29 @@
+[profile.default]
+src = "src"
+out = "artifacts-foundry"
+libs = ["lib", "node_modules"]
+test = "test/invariant"
+cache_path = "cache-foundry"
+
+solc = "0.8.28"
+
+remappings = [
+    "@openzeppelin/=node_modules/@openzeppelin/",
+    "@selfxyz/=node_modules/@selfxyz/",
+    "forge-std/=lib/forge-std/src/",
+]
+
+evm_version = "cancun"
+
+[profile.default.invariant]
+runs = 500
+depth = 100
+call_override = false
+
+[profile.default.fuzz]
+runs = 10000
+max_test_rejects = 65536
+
+[profile.ci.invariant]
+runs = 5000
+depth = 200

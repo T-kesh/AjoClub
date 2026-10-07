@@ -5,6 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
+    "test:invariant": "forge test --config-path foundry.toml -v",
+    "test:invariant:ci": "forge test --config-path foundry.toml --profile ci -v",
     "deploy:base-sepolia": "hardhat ignition deploy ignition/modules/AjoClub.ts --network base-sepolia",
     "deploy:base": "hardhat ignition deploy ignition/modules/AjoClub.ts --network base",
     "verify:base-sepolia": "hardhat verify --network base-sepolia",

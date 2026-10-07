@@ -14,6 +14,8 @@
     "pretest:adversarial": "node -e \"const{rmSync,existsSync}=require('fs');const p='./db/ajo_test_adversarial.db';if(existsSync(p))rmSync(p);if(existsSync(p+'-wal'))rmSync(p+'-wal');if(existsSync(p+'-shm'))rmSync(p+'-shm');\"",
     "test:adversarial": "cross-env DATABASE_PATH=./db/ajo_test_adversarial.db tsx --test agent/test_adversarial.ts",
     "test:e2e": "tsx agent/test_e2e.ts",
+    "test:invariant": "npm --prefix contracts run test:invariant",
+    "test:invariant:ci": "npm --prefix contracts run test:invariant:ci",
     "compile:contracts": "npm --prefix contracts run compile",
     "test:contracts": "npm --prefix contracts run test",
     "web:dev": "npm --prefix web run dev",
