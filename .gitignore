@@ -12,9 +12,11 @@ out/
 build/
 dist/
 
-# Hardhat Build Artifacts
+# Hardhat & Foundry Build Artifacts
 artifacts/
 cache/
+artifacts-foundry/
+cache-foundry/
 typechain-types/
 ignition/deployments/*/build-info/
 ignition/deployments/*/journal.jsonl

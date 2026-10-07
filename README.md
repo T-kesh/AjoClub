@@ -279,12 +279,34 @@ Runs the comprehensive guardrail test suite verifying cap enforcement, rotation 
 npm run test:adversarial
 ```
 
-### Smart Contract Tests
+### Smart Contract Unit Tests (Hardhat)
 
-Runs the Solidity contract unit tests covering round lifecycles, payments, and payout distributions:
+Runs the Hardhat Solidity contract unit tests covering round lifecycles, payments, cancellation refunds, and payout distributions (30 tests):
 
 ```bash
 npm run test:contracts
+```
+
+### Stateful Invariant & Fuzz Testing (Foundry)
+
+Enterprise-grade property-based and invariant testing using Foundry (`forge-std`), asserting mathematical safety under randomized multi-actor conditions:
+
+| Category | Test | Specification & Invariant | Runs / Depth |
+|:---|:---|:---|:---|
+| **Invariant** | `invariant_solvency` | Escrow balance &ge; `totalDeposited - totalPaidOut` across all clubs | 500 runs &times; 100 depth (50k calls) |
+| **Invariant** | `invariant_turnOrder` | No member receives payout disproportionate to their round share | 500 runs &times; 100 depth (50k calls) |
+| **Invariant** | `invariant_strictAccounting` | No residual funds trapped in completed clubs (`hasPaid` fully cleared) | 500 runs &times; 100 depth (50k calls) |
+| **Invariant** | `invariant_reentrancyGuard` | Reentrancy locks cannot be bypassed under malicious callback tokens | 500 runs &times; 100 depth (50k calls) |
+| **Fuzz** | `testFuzz_fullLifecycle` | Parametric N-member cycles maintain exact zero residual balance upon completion | 10,000 runs |
+| **Fuzz** | `testFuzz_partialDefault` | Random defaulter configurations correctly calculate reduced pots and grace timing | 10,000 runs |
+| **Fuzz** | `testFuzz_reentrancyOnPayout` | Hostile ERC-20 with `armReentrancy()` hook fails reentrancy against payout transfer | 10,000 runs |
+
+```bash
+# Run Foundry invariant & fuzz test suite (dev profile: 500 runs x 100 depth)
+npm run test:invariant
+
+# Run extended CI profile (5,000 runs x 200 depth = 1M calls)
+npm run test:invariant:ci
 ```
 
 ---
