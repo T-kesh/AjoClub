@@ -21,6 +21,12 @@ const BASE_SEPOLIA_RPC_URL =
   (vars.has("BASE_SEPOLIA_RPC_URL") ? vars.get("BASE_SEPOLIA_RPC_URL") : undefined) ??
   "https://sepolia.base.org";
 
+const BASE_MAINNET_DEPLOYER_KEY =
+  (vars.has("BASE_MAINNET_DEPLOYER_KEY") ? vars.get("BASE_MAINNET_DEPLOYER_KEY") : undefined) ??
+  process.env.BASE_MAINNET_DEPLOYER_KEY ??
+  process.env.PRIVATE_KEY ??
+  BASE_SEPOLIA_DEPLOYER_KEY;
+
 const PRIVATE_KEY = process.env.PRIVATE_KEY ?? BASE_SEPOLIA_DEPLOYER_KEY;
 const BASESCAN_API_KEY = process.env.BASESCAN_API_KEY ?? "";
 const CELOSCAN_API_KEY = process.env.CELOSCAN_API_KEY ?? "";
@@ -61,7 +67,7 @@ const config: HardhatUserConfig = {
     // Base Mainnet
     base: {
       url: process.env.BASE_MAINNET_RPC ?? "https://mainnet.base.org",
-      accounts: [PRIVATE_KEY],
+      accounts: [BASE_MAINNET_DEPLOYER_KEY],
       chainId: 8453,
     },
     // Celo Networks (coexisting as separate named networks)
