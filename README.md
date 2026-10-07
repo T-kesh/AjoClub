@@ -311,6 +311,18 @@ npm run test:invariant:ci
 
 ---
 
+## 🛡️ Security Audit & Bug Bounty (Phase 4.2)
+
+AjoClub contracts are hardened with OpenZeppelin `ReentrancyGuard`, strict Checks-Effects-Interactions (CEI) state ordering, and mathematically verified across 50,000 stateful invariant calls.
+
+- **Competitive Audit Scope**: [`audit/CONTEST_SCOPE.md`](audit/CONTEST_SCOPE.md) (Code4rena / Sherlock / Cantina ready)
+- **Bug Bounty Program Policy**: [`audit/BUG_BOUNTY_POLICY.md`](audit/BUG_BOUNTY_POLICY.md) (Immunefi v2.2 framework, rewards up to $25,000)
+- **Protocol Threat Model**: [`docs/threat_model.md`](docs/threat_model.md)
+- **Formal Invariants Specification**: [`docs/formal_invariants_spec.md`](docs/formal_invariants_spec.md)
+- **Technical Remediation Plan**: [`docs/audit_remediation_plan.md`](docs/audit_remediation_plan.md)
+
+---
+
 ## 📜 License
 
 MIT License. See [LICENSE](LICENSE) for details.

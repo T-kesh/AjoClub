@@ -2,12 +2,13 @@
 pragma solidity 0.8.28;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @dev Test harness for Foundry invariant / fuzz tests.
 ///      Identical to AjoClub.sol but Self Protocol verification replaced
 ///      by a simple forceVerify so no external hub is needed.
-contract AjoClubHarness is Ownable {
+contract AjoClubHarness is Ownable, ReentrancyGuard {
     enum ClubStatus { OPEN, ACTIVE, COMPLETE, CANCELLED }
 
     struct Club {
@@ -109,12 +110,14 @@ contract AjoClubHarness is Ownable {
         c.currentRound = 0;
     }
 
-    function cancelClub(uint256 clubId) external {
+    function cancelClub(uint256 clubId) external nonReentrant {
         Club storage c = clubs[clubId];
         require(msg.sender == c.creator, "Not creator");
         require(c.status == ClubStatus.OPEN, "Club not open");
 
         c.status = ClubStatus.CANCELLED;
+        emit ClubCancelled(clubId, msg.sender);
+
         for (uint256 i = 0; i < c.members.length; i++) {
             address member = c.members[i];
             if (hasPaid[clubId][member]) {
@@ -122,17 +125,17 @@ contract AjoClubHarness is Ownable {
                 require(IERC20(c.token).transfer(member, c.contribution), "Refund failed");
             }
         }
-        emit ClubCancelled(clubId, msg.sender);
     }
 
-    function leaveClub(uint256 clubId) external {
+    function leaveClub(uint256 clubId) external nonReentrant {
         Club storage c = clubs[clubId];
         require(c.status == ClubStatus.OPEN,     "Club not open");
         require(isMember[clubId][msg.sender],    "Not a member");
 
+        uint256 refundAmount = 0;
         if (hasPaid[clubId][msg.sender]) {
             hasPaid[clubId][msg.sender] = false;
-            require(IERC20(c.token).transfer(msg.sender, c.contribution), "Refund failed");
+            refundAmount = c.contribution;
         }
 
         for (uint256 i = 0; i < c.members.length; i++) {
@@ -144,9 +147,13 @@ contract AjoClubHarness is Ownable {
         }
         isMember[clubId][msg.sender] = false;
         emit MemberLeft(clubId, msg.sender);
+
+        if (refundAmount > 0) {
+            require(IERC20(c.token).transfer(msg.sender, refundAmount), "Refund failed");
+        }
     }
 
-    function contribute(uint256 clubId) external {
+    function contribute(uint256 clubId) external nonReentrant {
         Club storage c = clubs[clubId];
         require(c.status == ClubStatus.ACTIVE,    "Club not active");
         require(isMember[clubId][msg.sender],     "Not a member");
@@ -154,14 +161,15 @@ contract AjoClubHarness is Ownable {
         require(block.timestamp < c.cycleEnd,     "Cycle has ended");
 
         hasPaid[clubId][msg.sender] = true;
+        emit ContributionMade(clubId, msg.sender, c.currentRound);
+
         require(
             IERC20(c.token).transferFrom(msg.sender, address(this), c.contribution),
             "Transfer failed"
         );
-        emit ContributionMade(clubId, msg.sender, c.currentRound);
     }
 
-    function triggerPayout(uint256 clubId) external {
+    function triggerPayout(uint256 clubId) external nonReentrant {
         Club storage c = clubs[clubId];
         require(c.status == ClubStatus.ACTIVE,     "Club not active");
         require(block.timestamp >= c.cycleEnd,     "Cycle not ended");
@@ -180,11 +188,12 @@ contract AjoClubHarness is Ownable {
 
         address recipient = c.members[c.currentRound];
         uint256 payout    = c.contribution * payingMembers;
-
-        require(IERC20(c.token).transfer(recipient, payout), "Payout failed");
-        emit PayoutSent(clubId, recipient, payout, c.currentRound);
+        uint256 roundPaid = c.currentRound;
 
         _advanceCycle(clubId);
+        emit PayoutSent(clubId, recipient, payout, roundPaid);
+
+        require(IERC20(c.token).transfer(recipient, payout), "Payout failed");
     }
 
     function markDefaulted(uint256 clubId) external {
