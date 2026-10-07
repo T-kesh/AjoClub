@@ -27,15 +27,15 @@ export function usePaymentReminder(clubId: bigint) {
   useEffect(() => {
     if (!address || !club || !paymentStatus || notified) return;
 
-    const [name, token, contribution, , , , , cycleEnd, status, members] = club;
+    const [name, token, contribution, , , , cycleEnd, status] = club;
     const [memberAddresses, paid] = paymentStatus;
 
     // Check if user is a member
     const memberIndex = memberAddresses.findIndex((addr: string) => addr.toLowerCase() === address.toLowerCase());
     if (memberIndex === -1) return;
 
-    // Check if club is active
-    if (status !== 1n) return; // 1 = ACTIVE
+    // Check if club is active (1 = ACTIVE)
+    if (Number(status) !== 1) return;
 
     // Check if user hasn't paid this cycle
     if (paid[memberIndex]) return;
@@ -44,9 +44,10 @@ export function usePaymentReminder(clubId: bigint) {
     const cycleEndTime = Number(cycleEnd);
     const hoursUntilEnd = (cycleEndTime - now) / 3600;
 
+    const amount = (Number(contribution) / 1e18).toString();
+
     // If payment due within 48 hours
     if (hoursUntilEnd > 0 && hoursUntilEnd <= 48) {
-      const amount = (Number(contribution) / 1e18).toString();
       sendPaymentReminder(name, Math.ceil(hoursUntilEnd), amount, token);
       setNotified(true);
     }

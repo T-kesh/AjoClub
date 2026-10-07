@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config, { isServer }) => {
+    config.externals = [
+      ...(config.externals || []),
+      "pino-pretty",
+      "lokijs",
+      "encoding",
+      "@react-native-async-storage/async-storage",
+    ];
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
