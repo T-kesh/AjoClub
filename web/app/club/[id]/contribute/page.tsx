@@ -70,14 +70,21 @@ export default function ContributePage() {
     query: {
       enabled: !!callsId && step === "gasless_sending",
       refetchInterval: (query: { state: { data?: { status?: string } } }) =>
-        query.state.data?.status === "CONFIRMED" ? false : 1000,
+        query.state.data?.status === "success" ||
+        query.state.data?.status === "CONFIRMED"
+          ? false
+          : 1000,
     },
   });
 
   // When batched call confirms
   useEffect(() => {
-    if (step === "gasless_sending" && callsStatus?.status === "CONFIRMED") {
-      const receiptHash = callsStatus.receipts?.[0]?.transactionHash;
+    const isSuccess =
+      callsStatus?.status === "success" ||
+      (callsStatus?.status as string | undefined) === "CONFIRMED";
+
+    if (step === "gasless_sending" && isSuccess) {
+      const receiptHash = callsStatus?.receipts?.[0]?.transactionHash;
       if (receiptHash && receiptHash !== txHash) {
         setTxHash(receiptHash);
         setStep("done");
