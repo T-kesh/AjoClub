@@ -1,6 +1,6 @@
 "use client";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { AJO_CLUB_ABI, AJO_CLUB_ADDRESS } from "@/lib/contract";
+import { AJO_CLUB_ABI, AJO_CLUB_ADDRESS, CHAIN_ID } from "@/lib/contract";
 
 export function useGetClub(clubId: bigint | undefined) {
   return useReadContract({
@@ -45,6 +45,7 @@ export function useCreateClub() {
     maxMembers: bigint
   ) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "createClub",
@@ -61,6 +62,7 @@ export function useJoinClub() {
 
   async function joinClub(clubId: bigint) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "joinClub",
@@ -77,6 +79,7 @@ export function useContribute() {
 
   async function contribute(clubId: bigint) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "contribute",
@@ -93,6 +96,7 @@ export function useTriggerPayout() {
 
   async function triggerPayout(clubId: bigint) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "triggerPayout",
@@ -109,6 +113,7 @@ export function useStartClub() {
 
   async function startClub(clubId: bigint) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "startClub",
@@ -125,6 +130,7 @@ export function useCancelClub() {
 
   async function cancelClub(clubId: bigint) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "cancelClub",
@@ -141,6 +147,7 @@ export function useLeaveClub() {
 
   async function leaveClub(clubId: bigint) {
     return writeContractAsync({
+      chainId: CHAIN_ID,
       address: AJO_CLUB_ADDRESS,
       abi: AJO_CLUB_ABI,
       functionName: "leaveClub",

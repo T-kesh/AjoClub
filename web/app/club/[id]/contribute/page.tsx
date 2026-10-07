@@ -6,7 +6,7 @@ import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { useSendCalls, useCallsStatus } from "wagmi/experimental";
 import { waitForTransactionReceipt } from "@/lib/wagmi";
 import { useGetClub, useContribute } from "@/hooks/useAjoClub";
-import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI, tokenLabel, tokenDecimals } from "@/lib/contract";
+import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI, tokenLabel, tokenDecimals, CHAIN_ID } from "@/lib/contract";
 import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
 import { TestnetHelper } from "@/components/TestnetHelper";
@@ -165,6 +165,7 @@ export default function ContributePage() {
       if (needsApprove) {
         setStep("approving");
         const approveTx = await writeContractAsync({
+          chainId: CHAIN_ID,
           address: token as `0x${string}`,
           abi: ERC20_ABI,
           functionName: "approve",
