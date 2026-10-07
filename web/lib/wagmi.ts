@@ -1,5 +1,5 @@
 import { http, createConfig } from "wagmi";
-import { baseSepolia } from "wagmi/chains";
+import { baseSepolia, base, mainnet } from "wagmi/chains";
 import { coinbaseWallet, injected } from "wagmi/connectors";
 import { createPublicClient } from "viem";
 
@@ -17,7 +17,7 @@ export async function waitForTransactionReceipt({ hash }: { hash: `0x${string}` 
 }
 
 export const wagmiConfig = createConfig({
-  chains: [baseSepolia],
+  chains: [baseSepolia, base, mainnet],
   connectors: [
     injected({ target: "metaMask" }),
     coinbaseWallet({
@@ -28,6 +28,8 @@ export const wagmiConfig = createConfig({
   ],
   transports: {
     [baseSepolia.id]: http(rpcUrl),
+    [base.id]: http("https://mainnet.base.org"),
+    [mainnet.id]: http("https://eth.llamarpc.com"),
   },
   ssr: true,
 });
