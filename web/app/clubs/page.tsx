@@ -46,12 +46,12 @@ export default function ClubsPage() {
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row items-stretch sm:items-center">
-          <div className="flex-1 relative">
+        <div className="mt-6 sm:mt-8 flex flex-col gap-3 sm:flex-row items-stretch sm:items-center min-w-0">
+          <div className="flex-1 relative min-w-0">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="input pr-10 text-sm"
+              className="input pr-10 text-xs sm:text-sm"
               placeholder="Search clubs by name..."
             />
             {search && (
@@ -64,14 +64,14 @@ export default function ClubsPage() {
             )}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 shrink-0">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0 w-full sm:w-auto max-w-full">
             {(["All", "Active", "Open", "My Clubs"] as const).map((tab) => {
               const active = filter === tab;
               return (
                 <button
                   key={tab}
                   onClick={() => setFilter(tab)}
-                  className={`whitespace-nowrap rounded-2xl px-4 py-3 text-xs sm:text-sm font-semibold transition-all ${
+                  className={`flex-1 sm:flex-initial whitespace-nowrap rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold transition-all ${
                     active
                       ? "bg-[#0B3D2E] text-white dark:bg-[#22C55E] dark:text-[#0B2F28] shadow-sm"
                       : "bg-white text-slate-600 dark:bg-[#0B2F28] dark:text-slate-300 border border-slate-200/80 dark:border-[#164738] hover:bg-slate-50 dark:hover:bg-[#0F3B2F]"
@@ -127,7 +127,7 @@ export default function ClubsPage() {
 
         {/* Clubs Grid */}
         {!isLoading && ids.length > 0 && !(filter === "My Clubs" && !isConnected) && (
-          <div className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-6 sm:mt-7 grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 min-w-0 w-full">
             {ids.map((id) => (
               <ClubSummaryItem
                 key={id.toString()}

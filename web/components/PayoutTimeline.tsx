@@ -129,7 +129,7 @@ export function PayoutTimeline({
 
       {/* ── Active Round Spotlight Card (if club is active) ── */}
       {status === 1 && roundIndex < members.length && (
-        <div className="rounded-3xl bg-gradient-to-br from-[#0B3D2E] via-[#0E4937] to-[#07241B] p-6 text-white shadow-xl border border-emerald-500/30 relative overflow-hidden">
+        <div className="rounded-3xl bg-gradient-to-br from-[#0B3D2E] via-[#0E4937] to-[#07241B] p-4 sm:p-6 text-white shadow-xl border border-emerald-500/30 relative overflow-hidden min-w-0">
           {/* Subtle background glow */}
           <div className="absolute -top-12 -right-12 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -270,7 +270,7 @@ export function PayoutTimeline({
       )}
 
       {/* ── The Connected Timeline Track ── */}
-      <div className="rounded-3xl border border-slate-200 dark:border-[#164738] bg-white dark:bg-[#071F17] p-5 sm:p-7 shadow-sm">
+      <div className="rounded-3xl border border-slate-200 dark:border-[#164738] bg-white dark:bg-[#071F17] p-3.5 sm:p-7 shadow-sm min-w-0 overflow-hidden">
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100 dark:border-[#164738]">
           <div>
             <h3 className="text-base sm:text-lg font-extrabold text-[#0B3D2E] dark:text-white">

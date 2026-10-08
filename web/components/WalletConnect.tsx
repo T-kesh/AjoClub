@@ -269,7 +269,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
           <button
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-[#164738] bg-white dark:bg-[#0B2F28] hover:border-emerald-400 dark:hover:border-emerald-500 transition-all shadow-sm shrink-0"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-[#164738] bg-white dark:bg-[#0B2F28] hover:border-emerald-400 dark:hover:border-emerald-500 transition-all shadow-sm shrink-0"
           >
             {/* Status dot */}
             <span className="relative flex h-2 w-2 shrink-0">

@@ -177,33 +177,33 @@ export default function ClubPage() {
         </Link>
 
         {/* 2-Column Responsive Layout matching mockup */}
-        <div className="mt-5 grid gap-6 lg:grid-cols-[1.25fr_.75fr] items-start">
+        <div className="mt-5 grid gap-6 lg:grid-cols-[1.25fr_.75fr] items-start min-w-0 w-full">
           {/* Main Left Content */}
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0">
             {/* Club Header Card */}
-            <div className="card p-6 sm:p-7">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-sm shrink-0">
+            <div className="card p-4 sm:p-7 min-w-0 overflow-hidden">
+              <div className="flex flex-col xs:flex-row items-start justify-between gap-3 sm:gap-4 min-w-0">
+                <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                  <div className="grid h-12 w-12 sm:h-14 sm:w-14 place-items-center rounded-2xl bg-[#0B3D2E] text-xl sm:text-2xl text-white shadow-sm shrink-0">
                     {icon}
                   </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B3D2E] dark:text-white">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h1 className="text-xl sm:text-3xl font-extrabold text-[#0B3D2E] dark:text-white truncate" title={cleanName}>
                         {cleanName}
                       </h1>
-                      <span className="text-[#22C55E] text-lg font-bold" title="Verified onchain">
+                      <span className="text-[#22C55E] text-base sm:text-lg font-bold shrink-0" title="Verified onchain">
                         ✓
                       </span>
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium break-words">
                       {members.length} members · {symbol} · {formatUnits(contribution, decimals)} {symbol} per cycle · {cycleDays} days
                     </p>
                   </div>
                 </div>
 
                 <span
-                  className={`rounded-full px-3 py-1.5 text-xs font-bold shrink-0 ${
+                  className={`self-start xs:self-auto rounded-full px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold shrink-0 ${
                     status === 1
                       ? "bg-green-100 text-green-700 dark:bg-green-950/60 dark:text-green-300"
                       : status === 0
@@ -217,23 +217,23 @@ export default function ClubPage() {
 
               {/* Active Cycle Box */}
               {status === 1 && (
-                <div className="mt-6 rounded-3xl bg-[#0B3D2E] dark:bg-[#051F18] p-6 text-white shadow-lg border border-green-800/40">
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-white/60">
+                <div className="mt-5 sm:mt-6 rounded-3xl bg-[#0B3D2E] dark:bg-[#051F18] p-4 sm:p-6 text-white shadow-lg border border-green-800/40 min-w-0 overflow-hidden">
+                  <div className="flex items-end justify-between gap-2.5 sm:gap-4 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-white/60 truncate">
                         Current Cycle {Number(currentRound) + 1} of {members.length}
                       </p>
-                      <div className="mt-1 text-2xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
+                      <div className="mt-1 text-xl sm:text-3xl font-extrabold tracking-tight flex items-center gap-2">
                         <CountdownTimer cycleEnd={cycleEnd} />
                       </div>
                     </div>
-                    <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-[#22C55E]/40 text-sm font-bold bg-[#08291F]">
+                    <div className="grid h-14 w-14 sm:h-16 sm:w-16 place-items-center rounded-full border-3 sm:border-4 border-[#22C55E]/40 text-xs sm:text-sm font-bold bg-[#08291F] shrink-0">
                       {paidCount}/{members.length}
                     </div>
                   </div>
 
                   {/* Progress bar */}
-                  <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-white/15">
+                  <div className="mt-4 sm:mt-5 h-2.5 overflow-hidden rounded-full bg-white/15">
                     <div
                       className="h-full rounded-full bg-[#22C55E] transition-all duration-500"
                       style={{
@@ -241,7 +241,7 @@ export default function ClubPage() {
                       }}
                     />
                   </div>
-                  <div className="mt-3 flex justify-between text-xs text-white/60 font-medium">
+                  <div className="mt-3 flex justify-between text-[11px] sm:text-xs text-white/60 font-medium">
                     <span>{paidCount} contributions received</span>
                     <span>Pot: {formatUnits(potSize, decimals)} {symbol}</span>
                   </div>
@@ -335,7 +335,7 @@ export default function ClubPage() {
             )}
 
             {/* Tabs & Roster Card */}
-            <div className="card p-4 sm:p-7">
+            <div className="card p-3.5 sm:p-7 min-w-0 overflow-hidden">
               {/* Tab Navigation (Segmented Pill Control) */}
               <div className="bg-slate-100/90 dark:bg-[#071F17] p-1 sm:p-1.5 rounded-2xl flex items-center gap-1 overflow-x-auto no-scrollbar border border-slate-200/60 dark:border-[#164738]/60">
                 {[
@@ -504,7 +504,7 @@ export default function ClubPage() {
           </div>
 
           {/* Right Sidebar: Club Summary Card */}
-          <aside className="card p-6 sm:p-7 lg:sticky lg:top-24">
+          <aside className="card p-4 sm:p-7 lg:sticky lg:top-24 min-w-0 overflow-hidden">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
               Club Summary
             </p>

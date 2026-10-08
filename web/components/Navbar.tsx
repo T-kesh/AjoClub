@@ -66,7 +66,7 @@ export function Navbar() {
         </nav>
 
         {/* Actions Container */}
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Desktop Theme Toggle: Only rendered on desktop viewports (lg and up) */}
           <div className="hidden lg:flex items-center">
             <ThemeToggle />
