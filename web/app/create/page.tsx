@@ -10,6 +10,7 @@ import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
 import { TestnetHelper } from "@/components/TestnetHelper";
 import { PRESET_CLUB_ICONS } from "@/lib/clubIcons";
+import { CustomSelect } from "@/components/CustomSelect";
 import { useAccount } from "wagmi";
 import Link from "next/link";
 
@@ -33,6 +34,52 @@ export default function CreateClubPage() {
   const [amount, setAmount] = useState("50");
   const [cycle, setCycle] = useState(CYCLE_OPTIONS[0].value);
   const [maxMembers, setMaxMembers] = useState("5");
+
+  const tokenOptions = Object.entries(SUPPORTED_TOKENS).map(([label, addr]) => ({
+    value: addr as `0x${string}`,
+    label: `${label} (${tokenLabel(addr)})`,
+    secondaryLabel: "6 Decimals",
+    icon: <span className="text-lg">🪙</span>,
+    badge: "Base Sepolia",
+    description: `${addr.slice(0, 10)}...${addr.slice(-6)} · Verified ERC-20`,
+  }));
+
+  const cycleOptions = [
+    {
+      value: 7 * 24 * 3600,
+      label: "7 days",
+      secondaryLabel: "Weekly",
+      icon: <span className="text-base">⚡</span>,
+      badge: "Fast",
+      description: "Fast-paced cycles. Best for tight-knit groups.",
+    },
+    {
+      value: 14 * 24 * 3600,
+      label: "14 days",
+      secondaryLabel: "Bi-weekly",
+      icon: <span className="text-base">🗓️</span>,
+      badge: "Recommended",
+      description: "Standard 2-week salary cadence.",
+    },
+    {
+      value: 30 * 24 * 3600,
+      label: "30 days",
+      secondaryLabel: "Monthly",
+      icon: <span className="text-base">📅</span>,
+      badge: "Long-term",
+      description: "Monthly savings plan for larger capital goals.",
+    },
+  ];
+
+  const memberOptions = [
+    { value: "3", label: "3 members", icon: <span className="text-base">👥</span>, description: "Quick rotation · 3 cycles" },
+    { value: "5", label: "5 members", icon: <span className="text-base">👥</span>, badge: "Most Popular", description: "Standard circle · 5 cycles" },
+    { value: "8", label: "8 members", icon: <span className="text-base">👥</span>, description: "Medium group · 8 cycles" },
+    { value: "10", label: "10 members", icon: <span className="text-base">👥</span>, badge: "High Yield", description: "Substantial pot · 10 cycles" },
+    { value: "12", label: "12 members", icon: <span className="text-base">👥</span>, description: "Yearly plan if monthly · 12 cycles" },
+    { value: "15", label: "15 members", icon: <span className="text-base">👥</span>, description: "Large community · 15 cycles" },
+    { value: "20", label: "20 members", icon: <span className="text-base">👥</span>, description: "Maximum group size · 20 cycles" },
+  ];
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -177,22 +224,12 @@ export default function CreateClubPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                  Token
-                </label>
-                <select
-                  value={token}
-                  onChange={(e) => setToken(e.target.value as `0x${string}`)}
-                  className="input font-semibold"
-                >
-                  {Object.entries(SUPPORTED_TOKENS).map(([label, addr]) => (
-                    <option key={addr} value={addr}>
-                      {label} ({tokenLabel(addr)}) · Base Sepolia (6 Decimals)
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <CustomSelect
+                label="Token"
+                options={tokenOptions}
+                value={token}
+                onChange={(val) => setToken(val)}
+              />
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
@@ -216,39 +253,19 @@ export default function CreateClubPage() {
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                    Cycle Duration
-                  </label>
-                  <select
-                    value={cycle}
-                    onChange={(e) => setCycle(Number(e.target.value))}
-                    className="input"
-                  >
-                    {CYCLE_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <CustomSelect
+                  label="Cycle Duration"
+                  options={cycleOptions}
+                  value={cycle}
+                  onChange={(val) => setCycle(val)}
+                />
 
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                    Max Members
-                  </label>
-                  <select
-                    value={maxMembers}
-                    onChange={(e) => setMaxMembers(e.target.value)}
-                    className="input"
-                  >
-                    {["3", "5", "8", "10", "12", "15", "20"].map((n) => (
-                      <option key={n} value={n}>
-                        {n} members
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <CustomSelect
+                  label="Max Members"
+                  options={memberOptions}
+                  value={maxMembers}
+                  onChange={(val) => setMaxMembers(val)}
+                />
               </div>
 
               {/* Pot preview box */}

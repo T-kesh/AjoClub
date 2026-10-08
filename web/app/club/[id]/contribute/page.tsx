@@ -315,13 +315,24 @@ export default function ContributePage() {
             {/* Token Selector */}
             <div className="mb-6">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-                Token
+                Contribution Token
               </label>
-              <select className="input text-sm font-semibold" value={token} disabled>
-                <option value={token}>
-                  {symbol} (Base Sepolia · 6 Decimals)
-                </option>
-              </select>
+              <div className="w-full rounded-2xl border border-slate-200 dark:border-[#1E5645] bg-slate-50/70 dark:bg-[#08261F] px-4 py-3 flex items-center justify-between gap-3 text-sm">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-lg">🪙</span>
+                  <div>
+                    <span className="font-bold text-[#0B3D2E] dark:text-white">
+                      {symbol}
+                    </span>
+                    <span className="text-xs text-slate-400 dark:text-slate-400 ml-2">
+                      (6 Decimals)
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-950/60 text-[#0B7A4B] dark:text-[#22C55E] border border-green-200 dark:border-green-800/60">
+                  Base Sepolia
+                </span>
+              </div>
             </div>
 
             {/* Error prompt */}
