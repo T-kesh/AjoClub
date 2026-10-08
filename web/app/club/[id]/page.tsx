@@ -48,6 +48,7 @@ export default function ClubPage() {
 
   const [activeTab, setActiveTab] = useState<"timeline" | "members" | "details" | "activity">("timeline");
   const [actionError, setActionError] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   if (clubId === undefined) {
     return (
@@ -334,49 +335,32 @@ export default function ClubPage() {
             )}
 
             {/* Tabs & Roster Card */}
-            <div className="card p-6 sm:p-7">
-              {/* Tab Navigation */}
-              <div className="flex flex-wrap gap-4 sm:gap-8 border-b border-slate-100 dark:border-[#164738] pb-4 text-sm font-bold">
-                <button
-                  onClick={() => setActiveTab("timeline")}
-                  className={`transition-colors flex items-center gap-1.5 ${
-                    activeTab === "timeline"
-                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
-                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <span>📅</span> Payout Timeline
-                </button>
-                <button
-                  onClick={() => setActiveTab("members")}
-                  className={`transition-colors flex items-center gap-1.5 ${
-                    activeTab === "members"
-                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
-                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <span>👥</span> Members ({members.length})
-                </button>
-                <button
-                  onClick={() => setActiveTab("details")}
-                  className={`transition-colors flex items-center gap-1.5 ${
-                    activeTab === "details"
-                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
-                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <span>ℹ️</span> Details
-                </button>
-                <button
-                  onClick={() => setActiveTab("activity")}
-                  className={`transition-colors flex items-center gap-1.5 ${
-                    activeTab === "activity"
-                      ? "text-[#0B3D2E] dark:text-[#22C55E] border-b-2 border-[#22C55E] pb-4 -mb-[18px]"
-                      : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <span>📜</span> Activity
-                </button>
+            <div className="card p-4 sm:p-7">
+              {/* Tab Navigation (Segmented Pill Control) */}
+              <div className="bg-slate-100/90 dark:bg-[#071F17] p-1 sm:p-1.5 rounded-2xl flex items-center gap-1 overflow-x-auto no-scrollbar border border-slate-200/60 dark:border-[#164738]/60">
+                {[
+                  { id: "timeline", label: "Payout Timeline", shortLabel: "Timeline", icon: "📅" },
+                  { id: "members", label: `Members (${members.length})`, shortLabel: `Members (${members.length})`, icon: "👥" },
+                  { id: "details", label: "Details", shortLabel: "Details", icon: "ℹ️" },
+                  { id: "activity", label: "Activity", shortLabel: "Activity", icon: "📜" },
+                ].map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                      className={`flex-1 min-w-fit px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                        isActive
+                          ? "bg-white dark:bg-[#0B3D2E] text-[#0B3D2E] dark:text-[#22C55E] shadow-sm border border-slate-200/80 dark:border-emerald-600/50"
+                          : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                      }`}
+                    >
+                      <span className="text-xs sm:text-sm">{tab.icon}</span>
+                      <span className="hidden sm:inline">{tab.label}</span>
+                      <span className="sm:hidden">{tab.shortLabel}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Tab Content */}
@@ -415,20 +399,89 @@ export default function ClubPage() {
                 )}
 
                 {activeTab === "details" && (
-                  <div className="space-y-4 text-sm">
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#164738]">
-                      <span className="text-slate-500">Contract Address</span>
-                      <span className="font-mono text-xs text-[#0B7A4B] dark:text-[#22C55E]">
-                        {AJO_CLUB_ADDRESS}
+                  <div className="divide-y divide-slate-100 dark:divide-[#164738] text-sm">
+                    {/* Contract Address */}
+                    <div className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-4">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        Contract Address
+                      </span>
+                      <div className="flex items-center gap-2 max-w-full">
+                        <a
+                          href={`https://sepolia.basescan.org/address/${AJO_CLUB_ADDRESS}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-xs font-bold text-[#0B7A4B] dark:text-[#22C55E] hover:underline truncate"
+                          title={AJO_CLUB_ADDRESS}
+                        >
+                          <span className="sm:hidden">{AJO_CLUB_ADDRESS.slice(0, 10)}...{AJO_CLUB_ADDRESS.slice(-8)}</span>
+                          <span className="hidden sm:inline">{AJO_CLUB_ADDRESS}</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(AJO_CLUB_ADDRESS);
+                            setCopiedKey("contract");
+                            setTimeout(() => setCopiedKey(null), 2000);
+                          }}
+                          className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors shrink-0"
+                          title="Copy contract address"
+                        >
+                          {copiedKey === "contract" ? (
+                            <span className="text-[10px] font-bold text-emerald-500">✓ Copied</span>
+                          ) : (
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Grace Period */}
+                    <div className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-4">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        Grace Period
+                      </span>
+                      <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                        {Math.round(Number(gracePeriod) / 3600)} hours
                       </span>
                     </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#164738]">
-                      <span className="text-slate-500">Grace Period</span>
-                      <span className="font-bold">{Math.round(Number(gracePeriod) / 3600)} hours</span>
-                    </div>
-                    <div className="flex justify-between py-2 border-b border-slate-100 dark:border-[#164738]">
-                      <span className="text-slate-500">Token Contract</span>
-                      <span className="font-mono text-xs">{token}</span>
+
+                    {/* Token Contract */}
+                    <div className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-4">
+                      <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        Token Contract ({symbol})
+                      </span>
+                      <div className="flex items-center gap-2 max-w-full">
+                        <a
+                          href={`https://sepolia.basescan.org/token/${token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-xs text-slate-600 dark:text-slate-300 hover:underline truncate"
+                          title={token}
+                        >
+                          <span className="sm:hidden">{token.slice(0, 10)}...{token.slice(-8)}</span>
+                          <span className="hidden sm:inline">{token}</span>
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(token);
+                            setCopiedKey("token");
+                            setTimeout(() => setCopiedKey(null), 2000);
+                          }}
+                          className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors shrink-0"
+                          title="Copy token address"
+                        >
+                          {copiedKey === "token" ? (
+                            <span className="text-[10px] font-bold text-emerald-500">✓ Copied</span>
+                          ) : (
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
