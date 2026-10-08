@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { formatUnits } from "viem";
 import { Identity, Avatar, Name, Address } from "@coinbase/onchainkit/identity";
 import { CountdownTimer } from "@/components/CountdownTimer";
@@ -33,6 +33,13 @@ export function PayoutTimeline({
   maxMembers,
   userAddress,
 }: PayoutTimelineProps) {
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  const handleCopy = (addr: string) => {
+    navigator.clipboard.writeText(addr);
+    setCopiedAddress(addr);
+    setTimeout(() => setCopiedAddress(null), 2000);
+  };
   const roundIndex = Number(currentRound);
   const totalSeats = Math.max(members.length, Number(maxMembers));
   const activeMembersCount = members.length;
@@ -170,7 +177,7 @@ export function PayoutTimeline({
                 <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-300">
                   Receiving Pot This Round
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <Identity
                     address={members[roundIndex]}
                     schemaId="0xf8b05c79f0f3ce59748b707c29f6195228241d6543b1387f0f7ac9d9dd94b9d8"
@@ -182,9 +189,30 @@ export function PayoutTimeline({
                     />
                     <Address
                       address={members[roundIndex]}
+                      hasCopyAddressOnClick={false}
                       className="text-xs text-white/60 font-mono"
                     />
                   </Identity>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopy(members[roundIndex]);
+                    }}
+                    className="p-1 rounded-md hover:bg-emerald-800/60 text-emerald-300 hover:text-white transition-colors inline-flex items-center"
+                    title="Copy full address"
+                    aria-label="Copy full address"
+                  >
+                    {copiedAddress === members[roundIndex] ? (
+                      <span className="text-[10px] font-semibold text-emerald-200">
+                        ✓ Copied
+                      </span>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </button>
                   {members[roundIndex].toLowerCase() === userAddress?.toLowerCase() && (
                     <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-emerald-400 text-[#0B3D2E]">
                       You
@@ -357,20 +385,43 @@ export function PayoutTimeline({
                               )}
                             </div>
 
-                            <Identity
-                              address={memberAddr}
-                              schemaId="0xf8b05c79f0f3ce59748b707c29f6195228241d6543b1387f0f7ac9d9dd94b9d8"
-                              className="flex items-center gap-2 !bg-transparent !p-0 mt-0.5"
-                            >
-                              <Name
+                            <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                              <Identity
                                 address={memberAddr}
-                                className="font-bold text-sm text-[#0B3D2E] dark:text-white"
-                              />
-                              <Address
-                                address={memberAddr}
-                                className="text-xs text-slate-400 dark:text-slate-400 font-mono"
-                              />
-                            </Identity>
+                                schemaId="0xf8b05c79f0f3ce59748b707c29f6195228241d6543b1387f0f7ac9d9dd94b9d8"
+                                className="flex items-center gap-2 !bg-transparent !p-0"
+                              >
+                                <Name
+                                  address={memberAddr}
+                                  className="font-bold text-sm text-[#0B3D2E] dark:text-white"
+                                />
+                                <Address
+                                  address={memberAddr}
+                                  hasCopyAddressOnClick={false}
+                                  className="text-xs text-slate-400 dark:text-slate-400 font-mono"
+                                />
+                              </Identity>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleCopy(memberAddr);
+                                }}
+                                className="p-1 rounded-md hover:bg-slate-200/70 dark:hover:bg-slate-700/60 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors inline-flex items-center"
+                                title="Copy address"
+                                aria-label="Copy address"
+                              >
+                                {copiedAddress === memberAddr ? (
+                                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                    ✓ Copied
+                                  </span>
+                                ) : (
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                  </svg>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </>
                       ) : (

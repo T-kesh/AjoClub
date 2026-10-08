@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Identity, Avatar, Name, Address } from "@coinbase/onchainkit/identity";
 
 interface Props {
@@ -10,6 +11,14 @@ interface Props {
 }
 
 export function MemberList({ members, paid, currentRound, userAddress }: Props) {
+  const [copiedAddress, setCopiedAddress] = useState<string | null>(null);
+
+  const handleCopy = (addr: string) => {
+    navigator.clipboard.writeText(addr);
+    setCopiedAddress(addr);
+    setTimeout(() => setCopiedAddress(null), 2000);
+  };
+
   return (
     <ul className="divide-y divide-gray-200 dark:divide-gray-800 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
       {members.map((addr, i) => {
@@ -45,7 +54,33 @@ export function MemberList({ members, paid, currentRound, userAddress }: Props) 
                       </span>
                     )}
                   </div>
-                  <Address address={addr} className="text-xs text-gray-500 dark:text-gray-400 font-mono" />
+                  <div className="flex items-center gap-1.5">
+                    <Address
+                      address={addr}
+                      hasCopyAddressOnClick={false}
+                      className="text-xs text-gray-500 dark:text-gray-400 font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(addr);
+                      }}
+                      className="p-1 rounded-md hover:bg-slate-200/70 dark:hover:bg-slate-700/60 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors inline-flex items-center"
+                      title="Copy address"
+                      aria-label="Copy address"
+                    >
+                      {copiedAddress === addr ? (
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                          ✓ Copied
+                        </span>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </Identity>
             </div>

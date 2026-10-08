@@ -19,6 +19,7 @@ import { CountdownTimer } from "@/components/CountdownTimer";
 import { waitForTransactionReceipt } from "@/lib/wagmi";
 import { Navbar } from "@/components/Navbar";
 import { friendlyError } from "@/lib/errors";
+import { parseClubName } from "@/lib/clubIcons";
 import { useState, useMemo } from "react";
 import Link from "next/link";
 
@@ -101,6 +102,7 @@ export default function ClubPage() {
   const [name, token, contribution, cycleDuration, gracePeriod, maxMembers, currentRound, cycleEnd, status, members] = club;
   const [, paid] = paymentData ?? [[], []];
 
+  const { icon, cleanName } = parseClubName(name, clubId);
   const decimals = tokenDecimals(token);
   const symbol = tokenLabel(token);
   const isMember = members.some((m: string) => m.toLowerCase() === address?.toLowerCase());
@@ -182,12 +184,12 @@ export default function ClubPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-sm shrink-0">
-                    🫙
+                    {icon}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
                       <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B3D2E] dark:text-white">
-                        {name}
+                        {cleanName}
                       </h1>
                       <span className="text-[#22C55E] text-lg font-bold" title="Verified onchain">
                         ✓

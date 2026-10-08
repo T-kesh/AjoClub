@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatUnits } from "viem";
 import { tokenLabel, tokenDecimals } from "@/lib/contract";
+import { parseClubName } from "@/lib/clubIcons";
 
 interface Props {
   clubId: bigint;
@@ -38,6 +39,7 @@ export function ClubCard({
   const decimals = tokenDecimals(token);
   const symbol = tokenLabel(token);
   const cycleDays = cycleDuration ? Math.round(Number(cycleDuration) / 86400) : 14;
+  const { icon, cleanName } = parseClubName(name, clubId);
 
   return (
     <div className="card p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_18px_50px_rgba(11,61,46,.10)] flex flex-col justify-between">
@@ -45,12 +47,12 @@ export function ClubCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#0B3D2E] text-lg text-white shadow-sm shrink-0">
-              {Number(clubId) % 2 === 0 ? "🫙" : "🌱"}
+            <div className="grid h-11 w-11 place-items-center rounded-2xl bg-[#0B3D2E] text-xl text-white shadow-sm shrink-0">
+              {icon}
             </div>
             <div>
               <h3 className="font-bold text-[#0B3D2E] dark:text-white text-base leading-tight">
-                {name}
+                {cleanName}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
                 {members.length} / {maxMembers.toString()} members · {symbol}

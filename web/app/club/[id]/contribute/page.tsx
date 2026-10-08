@@ -10,6 +10,7 @@ import { AJO_CLUB_ADDRESS, AJO_CLUB_ABI, tokenLabel, tokenDecimals, CHAIN_ID } f
 import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
 import { TestnetHelper } from "@/components/TestnetHelper";
+import { parseClubName } from "@/lib/clubIcons";
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 
@@ -114,6 +115,7 @@ export default function ContributePage() {
   }
 
   const [name, token, contribution] = club;
+  const { icon, cleanName } = parseClubName(name, clubId);
   const decimals = tokenDecimals(token);
   const symbol = tokenLabel(token);
   const formattedAmount = formatUnits(contribution, decimals);
@@ -262,14 +264,14 @@ export default function ContributePage() {
           <div className="card mt-4 p-6 sm:p-8">
             <div className="flex items-center gap-3.5 mb-6">
               <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-sm shrink-0">
-                🫙
+                {icon}
               </div>
               <div>
                 <h1 className="text-xl font-extrabold text-[#0B3D2E] dark:text-white">
                   Contribute
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  {name} · {symbol} · {formattedAmount} {symbol}
+                  {cleanName} · {symbol} · {formattedAmount} {symbol}
                 </p>
               </div>
             </div>

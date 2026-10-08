@@ -9,6 +9,7 @@ import { waitForTransactionReceipt } from "@/lib/wagmi";
 import { friendlyError } from "@/lib/errors";
 import { Navbar } from "@/components/Navbar";
 import { TestnetHelper } from "@/components/TestnetHelper";
+import { PRESET_CLUB_ICONS } from "@/lib/clubIcons";
 import { useAccount } from "wagmi";
 import Link from "next/link";
 
@@ -26,6 +27,7 @@ export default function CreateClubPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const defaultToken = Object.values(SUPPORTED_TOKENS)[0];
+  const [selectedIcon, setSelectedIcon] = useState<string>(PRESET_CLUB_ICONS[0].emoji);
   const [name, setName] = useState("");
   const [token, setToken] = useState(defaultToken);
   const [amount, setAmount] = useState("50");
@@ -59,8 +61,9 @@ export default function CreateClubPage() {
     try {
       const decimals = tokenDecimals(token);
       const gracePeriod = 24 * 3600; // 24 hours default grace period
+      const fullClubName = `${selectedIcon} ${name.trim()}`;
       const hash = await createClub(
-        name,
+        fullClubName,
         token,
         parseUnits(amount, decimals),
         BigInt(cycle),
@@ -123,6 +126,44 @@ export default function CreateClubPage() {
 
           <div className="card mt-6 p-6 sm:p-8">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Circle Icon Picker */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  Choose Circle Icon
+                </label>
+                <div className="flex items-center gap-3.5 mb-3">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[#0B3D2E] text-2xl text-white shadow-md shrink-0 border border-emerald-500/30">
+                    {selectedIcon}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                      Icon Preview
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-400">
+                      This icon will appear on your circle badge, payout timeline, and card.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2 p-3 rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 border border-slate-200 dark:border-[#164738]/60">
+                  {PRESET_CLUB_ICONS.map((item) => (
+                    <button
+                      key={item.emoji}
+                      type="button"
+                      onClick={() => setSelectedIcon(item.emoji)}
+                      title={item.label}
+                      className={`h-10 w-10 text-xl rounded-xl flex items-center justify-center transition-all ${
+                        selectedIcon === item.emoji
+                          ? "bg-[#0B3D2E] text-white shadow-md ring-2 ring-emerald-500 scale-105"
+                          : "hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200"
+                      }`}
+                    >
+                      {item.emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
                   Club Name
