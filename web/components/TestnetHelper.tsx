@@ -5,6 +5,7 @@ import { useAccount, useBalance } from "wagmi";
 import { formatUnits } from "viem";
 import { IS_TESTNET, TOKENS, tokenDecimals } from "@/lib/contract";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
+import Link from "next/link";
 
 interface TestnetHelperProps {
   variant?: "card" | "compact" | "banner";
@@ -96,14 +97,12 @@ export function TestnetHelper({
         </div>
         <div className="flex items-center justify-between pt-1 border-t border-emerald-100/60 dark:border-[#164738]/60 text-[11px]">
           <div className="flex items-center gap-2">
-            <a
-              href="https://faucet.quicknode.com/base/sepolia"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/faucet"
               className="text-amber-700 dark:text-amber-400 font-semibold hover:underline"
             >
-              Gas ETH ↗
-            </a>
+              Gas ETH 💧
+            </Link>
             <span className="text-slate-300 dark:text-slate-600">·</span>
             <a
               href="https://faucet.circle.com/"
@@ -170,14 +169,12 @@ export function TestnetHelper({
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
             {isLowEth && (
-              <a
-                href="https://faucet.quicknode.com/base/sepolia"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/faucet"
                 className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5"
               >
-                <span>Get Free ETH Gas ↗</span>
-              </a>
+                <span>Claim Free ETH Gas 💧</span>
+              </Link>
             )}
             <a
               href="https://faucet.circle.com/"
@@ -256,20 +253,18 @@ export function TestnetHelper({
           <span className="text-xs text-slate-400 group-hover:translate-x-0.5 transition-transform">→</span>
         </a>
 
-        <a
-          href="https://faucet.quicknode.com/base/sepolia"
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href="/faucet"
           className="p-2.5 rounded-xl bg-white dark:bg-[#071F17] hover:bg-emerald-50 dark:hover:bg-[#0D382E] border border-slate-200 dark:border-[#164738] text-left transition-all group flex items-center justify-between"
         >
           <div>
             <div className="text-xs font-bold text-[#0B3D2E] dark:text-white group-hover:text-emerald-600 transition-colors">
-              Base ETH Faucet ↗
+              Claim Free Gas (ETH) 💧
             </div>
-            <div className="text-[10px] text-slate-400">Free Sepolia ETH for gas</div>
+            <div className="text-[10px] text-slate-400">Instant in-app faucet & hub</div>
           </div>
           <span className="text-xs text-slate-400 group-hover:translate-x-0.5 transition-transform">→</span>
-        </a>
+        </Link>
       </div>
 
       {/* Token Details & Helper */}

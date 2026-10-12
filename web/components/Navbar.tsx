@@ -31,6 +31,7 @@ export function Navbar() {
     { href: "/", label: "Home", icon: "🏠" },
     { href: "/create", label: "Create Club", icon: "➕" },
     { href: "/clubs", label: "Browse Clubs", icon: "🔍" },
+    { href: "/faucet", label: "Faucet", icon: "💧" },
   ];
 
   return (
