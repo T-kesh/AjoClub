@@ -236,6 +236,12 @@ npm run bot
 
 > **Standalone Indexer Option:** If you prefer running the on-chain event indexer in a dedicated worker process, run `npm run indexer`. SQLite WAL mode provides concurrent access safely.
 
+> [!NOTE]
+> **Daemon Architecture & Cloud Deployment:**  
+> The Telegram bot and agent coordinator run as a **persistent background daemon** (grammY long-polling `bot.start()`, in-process Base Sepolia indexer, scheduled autonomous tick loop, and local SQLite database).  
+> Serverless platforms like **Vercel** cannot run long-polling daemons or background intervals because serverless function invocations terminate after ~10–15 seconds and have ephemeral, read-only filesystems.  
+> For production hosting, deploy the bot daemon to a persistent environment such as **Railway**, **Render**, **Fly.io**, **DigitalOcean App Platform**, or an **Ubuntu VPS (systemd / Docker / PM2)**.
+
 ---
 
 ## 🌐 Web Application (Base Sepolia + OnchainKit)
