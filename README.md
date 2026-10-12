@@ -254,6 +254,7 @@ AjoClub provides a modern, responsive web application (`web/`) built with Next.j
 - **Paymaster-Sponsored Gasless Contributions:** Uses ERC-5792 batched calls (`wallet_sendCalls`) via Coinbase Developer Platform (CDP) Paymaster to sponsor gas fees and execute token `approve` + `contribute` in a single atomic tap.
 - **Basename & Identity Resolution:** Roster displays utilize OnchainKit's `<Identity>`, `<Avatar>`, `<Name>`, and `<Address>` components to automatically resolve member `.base.eth` names and verified avatars.
 - **Injected Wallet Support:** Seamless fallback to standard browser wallets (MetaMask, Rainbow, Coinbase Wallet extension) with a robust 2-step approve & contribute flow.
+- **Self Protocol Zero-Knowledge Identity Verification:** Complete Sybil-resistance gate on `/verify` integrating `@selfxyz/qrcode` for client-side biometric e-Passport NFC zero-knowledge proofs. Powered by a Next.js onchain relayer API (`/api/verify/self`) with live polling and a testnet developer fast-path for instant QA on Base Sepolia.
 - **Native 6-Decimal USDC:** Fully calibrated for Circle's native USDC on Base Sepolia (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`).
 
 ### Running the Web Application

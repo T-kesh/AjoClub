@@ -1,17 +1,33 @@
 import { SelfAppBuilder } from "@selfxyz/qrcode";
 
+export function getSelfEndpoint(): string {
+  if (process.env.NEXT_PUBLIC_SELF_ENDPOINT) {
+    return process.env.NEXT_PUBLIC_SELF_ENDPOINT;
+  }
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}/api/verify/self`;
+  }
+  return "https://ajoclub.xyz/api/verify/self";
+}
+
 export function buildSelfApp(userAddress: string) {
-  const endpoint = process.env.NEXT_PUBLIC_SELF_ENDPOINT;
-  if (!endpoint || !userAddress) return null;
+  if (!userAddress) return null;
 
-  return new SelfAppBuilder({
-    appName: "AjoClub",
-    scope: "ajo-club",
-    endpoint,
-    endpointType: process.env.NEXT_PUBLIC_CHAIN_ID === "42220" ? "celo" : "staging_celo",
-    userIdType: "hex",
-    userId: userAddress,
-    version: 2,
+  const endpoint = getSelfEndpoint();
 
-  }).build();
+  try {
+    return new SelfAppBuilder({
+      appName: "AjoClub",
+      scope: "ajo-club",
+      endpoint,
+      userId: userAddress,
+      disclosures: {
+        minimumAge: 18,
+        ofac: false,
+      },
+    }).build();
+  } catch (error) {
+    console.error("Failed to build SelfApp configuration:", error);
+    return null;
+  }
 }
