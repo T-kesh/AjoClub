@@ -2,6 +2,8 @@
 
 import { SelfQRcodeWrapper } from "@selfxyz/qrcode";
 import { buildSelfApp, getSelfEndpoint } from "@/lib/self";
+import { getUniversalLink } from "@selfxyz/common/utils/appType";
+import { QRCodeSVG } from "qrcode.react";
 import { useState, useEffect } from "react";
 
 interface Props {
@@ -11,7 +13,7 @@ interface Props {
 
 export function SelfVerifyButton({ userAddress, onSuccess }: Props) {
   const selfApp = buildSelfApp(userAddress);
-  const [scanning, setScanning] = useState(false);
+  const [activeTab, setActiveTab] = useState<"live" | "direct">("live");
   const [verifyError, setVerifyError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [verifiedTx, setVerifiedTx] = useState<{
@@ -111,38 +113,80 @@ export function SelfVerifyButton({ userAddress, onSuccess }: Props) {
     );
   }
 
+  const universalLink = selfApp ? getUniversalLink(selfApp) : "";
+
   return (
     <div className="flex flex-col items-center w-full">
+      {/* Mode Selector Tabs (when app config is ready) */}
+      {selfApp && (
+        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 text-[11px] font-semibold">
+          <button
+            type="button"
+            onClick={() => setActiveTab("live")}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              activeTab === "live"
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Live WebSocket QR
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("direct")}
+            className={`px-3 py-1.5 rounded-lg transition-all ${
+              activeTab === "direct"
+                ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                : "text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            }`}
+          >
+            Direct Universal Link QR
+          </button>
+        </div>
+      )}
+
       {/* QR Code Container */}
       {selfApp ? (
-        <div className="rounded-2xl overflow-hidden bg-white p-3 shadow-md ring-1 ring-slate-200 dark:ring-gray-700">
-          <SelfQRcodeWrapper
-            selfApp={selfApp}
-            onSuccess={() => {
-              setScanning(false);
-              setVerifiedTx({
-                basescanUrl: `https://sepolia.basescan.org/address/${userAddress}`,
-              });
-              setTimeout(onSuccess, 2000);
-            }}
-            onError={(err: any) => {
-              setScanning(false);
-              setVerifyError(
-                err?.reason ??
-                  err?.error_code ??
-                  "Verification failed. Please try again."
-              );
-            }}
-            size={240}
-          />
+        <div className="rounded-2xl overflow-hidden bg-white p-4 shadow-md ring-1 ring-slate-200 dark:ring-gray-700 flex flex-col items-center">
+          {activeTab === "live" ? (
+            <SelfQRcodeWrapper
+              selfApp={selfApp}
+              onSuccess={() => {
+                setVerifiedTx({
+                  basescanUrl: `https://sepolia.basescan.org/address/${userAddress}`,
+                });
+                setTimeout(onSuccess, 2000);
+              }}
+              onError={(err: any) => {
+                setVerifyError(
+                  err?.reason ??
+                    err?.error_code ??
+                    "Live connection issue. Switch to 'Direct Universal Link QR' tab above."
+                );
+              }}
+              size={240}
+            />
+          ) : (
+            <div className="p-2">
+              <QRCodeSVG
+                value={universalLink}
+                size={240}
+                bgColor="#ffffff"
+                fgColor="#000000"
+                level="M"
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-6 text-center w-full">
           <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Connect wallet to generate QR
+            {userAddress ? "Preparing Proof Request…" : "Connect wallet to generate QR"}
           </p>
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            A valid wallet address is required to generate the Self Protocol proof request.
+            {userAddress
+              ? "Configuring Self Protocol zero-knowledge verification parameters."
+              : "A valid wallet address is required to generate the Self Protocol proof request."}
           </p>
         </div>
       )}
