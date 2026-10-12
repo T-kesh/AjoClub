@@ -164,10 +164,45 @@ AjoClub/
 
 ### Prerequisites
 
-- Node.js (v20+ recommended)
-- Telegram Bot Token from [@BotFather](https://t.me/BotFather)
-- Google Gemini API Key from Google AI Studio (or Anthropic API key)
-- Funded Base Sepolia wallet (for deployer and agent)
+Prerequisites depend on how you want to interact with AjoClub:
+
+- **1. Offline Automated Testing (Zero setup & $0 required):**
+  - **Node.js** (v20+ recommended)
+  - No wallet, no mainnet ETH, no testnet gas, and no API keys required (built-in in-memory SQLite, simulated chain mode, and mock LLM reasoning).
+  - *(Optional)* [Foundry (`forge`)](https://getfoundry.sh/) if running property-based invariant fuzz tests (`npm run test:invariant`).
+
+- **2. Interactive Web Application (Base Sepolia Testnet):**
+  - **MetaMask** (or any injected browser wallet) connected to **Base Sepolia** (Network ID: `84532`, RPC: `https://sepolia.base.org`).
+  - **Free Base Sepolia ETH** for gas *(see zero-mainnet faucet guide below)*.
+  - **Free Base Sepolia USDC** (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`) to join and fund savings circles.
+
+- **3. Autonomous Telegram Daemon (`bot/`):**
+  - **Telegram Bot Token** from [@BotFather](https://t.me/BotFather).
+  - **Google Gemini API Key** from [Google AI Studio](https://aistudio.google.com/) (or Anthropic API key).
+  - Agent wallet private key configured in Hardhat vars storage (`BASE_SEPOLIA_AGENT_KEY`).
+
+---
+
+### 🚰 Free Testnet Faucets (No Mainnet ETH Required)
+
+> [!NOTE]
+> **Overcoming the "0.001 Mainnet ETH" Faucet Trap:**  
+> Standard commercial faucets (such as Alchemy or Google Cloud Web3) require holding **at least 0.001 ETH on Ethereum Mainnet** (~$3 USD) to prevent bot sybils.  
+> **You do NOT need any Ethereum Mainnet funds to test AjoClub.** Use any of the verified zero-balance faucets below to claim free testnet ETH and USDC:
+
+| Faucet | What it Dispenses | Requirement / Verification | Mainnet ETH Needed? | Link |
+|:---|:---|:---|:---|:---|
+| **Superchain Faucet** *(Recommended)* | 0.05 – 0.1 Base Sepolia ETH | GitHub login (account > 30 days) | ❌ **No (0 ETH)** | [console.optimism.io/faucet](https://console.optimism.io/faucet) |
+| **Chainlink Faucets** | 0.1 Base Sepolia ETH + testnet LINK | GitHub sign-in | ❌ **No (0 ETH)** | [faucets.chain.link/base-sepolia](https://faucets.chain.link/base-sepolia) |
+| **PoW Sepolia Miner + Base Bridge** | Up to 1.0 Sepolia ETH | Browser CPU mining (2 mins, zero login) | ❌ **No (0 ETH)** | [sepolia-faucet.pk910.de](https://sepolia-faucet.pk910.de/) → bridge to Base via [bridge.base.org](https://bridge.base.org/deposit) |
+| **LearnWeb3 Faucet** | 0.05 Base Sepolia ETH | Discord or GitHub login | ❌ **No (0 ETH)** | [learnweb3.io/faucets/base_sepolia](https://learnweb3.io/faucets/base_sepolia/) |
+| **Circle USDC Faucet** | 10 Testnet USDC on Base Sepolia | Simple Captcha verification | ❌ **No (0 ETH)** | [faucet.circle.com](https://faucet.circle.com/) |
+
+> [!TIP]
+> **Fastest 2-Minute Onboarding:**
+> 1. Claim free Base Sepolia ETH from the **[Superchain Faucet](https://console.optimism.io/faucet)** via GitHub.
+> 2. Claim free testnet USDC from **[faucet.circle.com](https://faucet.circle.com/)** (select *Base Sepolia*).
+> 3. Connect MetaMask to `http://localhost:3000` — your wallet is instantly ready to verify with Self Protocol and join rotating circles!
 
 ### 1. Installation
 
@@ -285,6 +320,10 @@ npm run build
 ---
 
 ## 🧪 Testing & Verification
+
+> [!NOTE]
+> **Deterministic Local Execution (Zero Gas & Zero Funds Needed):**  
+> All test suites below run entirely in local, self-contained environments (in-memory SQLite, local Hardhat network, and local Foundry EVM). You do **not** need a funded wallet, mainnet ETH, testnet gas, or live API keys to run any of these tests.
 
 ### Adversarial Security Test Suite (63 Tests)
 
