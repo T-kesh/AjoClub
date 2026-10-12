@@ -20,6 +20,10 @@ The smart contract enforces round-robin payouts and pot distribution without int
 | **Telegram Coordinator** | `@Ajoclub_bot` | [Open in Telegram](https://t.me/Ajoclub_bot) |
 | **Chain ID** | `84532` (Base Sepolia) | [Base Docs](https://docs.base.org) |
 
+> [!IMPORTANT]
+> **Wallet Compatibility Notice (Base Sepolia Testnet):**  
+> Native Base / Coinbase Smart Wallet connection is currently not functional due to the testnet deployment on **Base Sepolia**. Testers and reviewers should connect using **MetaMask** (or another standard injected browser wallet) configured for Base Sepolia instead.
+
 ### Base Mainnet (Production Ready)
 
 | Parameter | Configuration |
@@ -238,8 +242,12 @@ npm run bot
 
 AjoClub provides a modern, responsive web application (`web/`) built with Next.js 14, React 18, Wagmi 2, and `@coinbase/onchainkit`:
 
+> [!NOTE]
+> **Wallet Connection Notice:**  
+> Native Base (Coinbase Smart Wallet / passkey) connection is currently not functional due to the project being built and deployed on the **Base Sepolia testnet**. Users and reviewers should use **MetaMask** (or standard injected browser extension) connected to Base Sepolia instead.
+
 ### Key Features
-- **Custom Multi-Wallet Connect Modal:** Streamlined wallet connection with dedicated MetaMask and Base (Coinbase Smart Wallet passkeys & extension) options, live network-switching guard, and connected account dropdown with copy address and Basescan link.
+- **Custom Multi-Wallet Connect Modal:** Streamlined wallet connection with dedicated MetaMask and Base options, live network-switching guard, and connected account dropdown with copy address and Basescan link. *(Note: Base native connection is temporarily unavailable on Base Sepolia testnet; please connect using MetaMask).*
 - **Testnet USDC Faucet Helper & 1-Click Asset Watch:** Zero-friction testnet onboarding displaying live Base Sepolia USDC balance, 1-click token addition to wallet (`wallet_watchAsset`), and direct faucet access to Circle's Base Sepolia USDC faucet. Strictly conditional on testnet so no code changes are required when switching to Base Mainnet.
 - **Visual ROSCA Payout Timeline & Turn Order Queue:** Interactive cycle timeline and member turn sequence on `/club/[id]` displaying completed round disbursements, active round spotlight with recipient identity, live countdown timer, and pot collection progress bar (`X of Y contributed`), with personalized "Your Turn" position indicators.
 - **Coinbase Smart Wallet Passkeys:** 1-tap onboarding using biometric passkeys (FaceID / TouchID / Windows Hello) with zero seed-phrase friction.
