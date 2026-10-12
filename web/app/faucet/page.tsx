@@ -276,7 +276,7 @@ export default function FaucetPage() {
                 Base Sepolia USDC
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                Claim <span className="font-semibold text-slate-700 dark:text-slate-200">10 USDC</span> from Circle's official testnet faucet. Required for creating and funding rotating savings circles.
+                Claim <span className="font-semibold text-slate-700 dark:text-slate-200">10 USDC</span> from Circle&apos;s official testnet faucet. Required for creating and funding rotating savings circles.
               </p>
 
               <div className="mt-4 p-3 rounded-xl bg-slate-50 dark:bg-[#071F17] border border-slate-100 dark:border-[#164738]/60 text-xs">
