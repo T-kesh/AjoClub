@@ -4,6 +4,9 @@ module.exports = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      screens: {
+        xs: "400px",
+      },
       colors: {
         forest: {
           DEFAULT: "#0B3D2E",

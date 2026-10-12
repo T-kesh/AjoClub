@@ -42,7 +42,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero Section */}
         <section className="mesh overflow-hidden border-b border-slate-200/50 dark:border-[#164738]/50">
-          <div className="container-app grid min-h-[580px] lg:min-h-[640px] items-center gap-8 lg:gap-12 py-8 sm:py-12 lg:py-16 lg:grid-cols-[1.1fr_.9fr]">
+          <div className="container-app grid min-h-[580px] lg:min-h-[640px] items-center gap-8 lg:gap-8 xl:gap-12 py-8 sm:py-12 lg:py-16 lg:grid-cols-2">
             {/* Left Content */}
             <div className="text-left min-w-0 max-w-full">
               <span className="eyebrow max-w-full inline-flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs">
@@ -110,7 +110,7 @@ export default function Home() {
             </div>
 
             {/* Right Graphic: Interactive 3D Lifecycle Rotating Wheel */}
-            <div className="relative flex justify-center items-center py-2 sm:py-4 min-w-0 max-w-full overflow-hidden sm:overflow-visible">
+            <div className="relative flex justify-center items-center py-2 sm:py-4 min-w-0 max-w-full overflow-visible w-full">
               <InteractiveLifecycleWheel />
             </div>
           </div>
