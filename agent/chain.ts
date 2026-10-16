@@ -75,7 +75,7 @@ const contractAddress = (process.env.AJO_CLUB_CONTRACT_ADDRESS || "0x00000000000
  * 2. Hardhat vars storage (BASE_SEPOLIA_AGENT_KEY)
  */
 function resolveAgentPrivateKey(): Hex | undefined {
-  const envKey = process.env.AGENT_PRIVATE_KEY || process.env.PRIVATE_KEY;
+  const envKey = process.env.BASE_SEPOLIA_AGENT_KEY || process.env.AGENT_PRIVATE_KEY || process.env.PRIVATE_KEY;
   if (envKey && envKey.startsWith("0x") && envKey.length === 66) {
     return envKey as Hex;
   }
