@@ -44,6 +44,13 @@ export const AJO_CLUB_ABI = [
     inputs: [{ name: "clubId", type: "uint256" }],
     outputs: [],
   },
+  {
+    name: "claimCollateral",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "clubId", type: "uint256" }],
+    outputs: [],
+  },
   // ── Cycle mechanics ─────────────────────────────────────────────────────────
   {
     name: "contribute",
@@ -154,6 +161,19 @@ export const AJO_CLUB_ABI = [
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "clubIds", type: "uint256[]" }],
+  },
+  {
+    name: "getMemberCollateral",
+    type: "function",
+    stateMutability: "view",
+    inputs: [
+      { name: "clubId", type: "uint256" },
+      { name: "member", type: "address" },
+    ],
+    outputs: [
+      { name: "collateral", type: "uint256" },
+      { name: "claimed", type: "bool" },
+    ],
   },
   {
     name: "clubCount",

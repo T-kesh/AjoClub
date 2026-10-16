@@ -11,7 +11,7 @@ import {
   formatApprovalCard,
   formatCirclesList,
 } from "../templates/cards.js";
-import { circlesRepo, membersRepo } from "../../db/index.js";
+import { circlesRepo, membersRepo, protocolEarningsRepo } from "../../db/index.js";
 import { sendTelegramDM } from "../index.js";
 
 const coordinator = new AgentCoordinator();
@@ -28,6 +28,7 @@ export async function handleStart(ctx: Context): Promise<void> {
     `• \`/link <walletAddress>\` — Link your Telegram account to your Base wallet`,
     `• \`/remind <id>\` — Check unpaid members and dispatch payment reminders`,
     `• \`/payout <id>\` — Propose round payout for organizer approval`,
+    `• \`/earnings\` — View protocol monetization, fees, & slashing revenue proof`,
     `• \`/help\` — System architecture & security invariants`,
     ``,
     `💡 *Or just ask me anything naturally!* e.g., *"How is circle 1 doing?"*`,
@@ -312,4 +313,38 @@ export async function handleNaturalMessage(ctx: Context): Promise<void> {
     }
   }
 }
+
+export async function handleEarnings(ctx: Context): Promise<void> {
+  const earnings = protocolEarningsRepo.getTotalEarnings();
+  const recent = protocolEarningsRepo.getAll().slice(0, 5);
+
+  const lines = [
+    `💰 *AjoClub Protocol Monetization & Revenue Proof*`,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `📊 *Total Revenue Collected:* \`$${earnings.totalRevenueUsdc.toFixed(2)} USDC\``,
+    `• *Pot Take-Rate (1.0%):* \`$${earnings.totalPayoutFeesUsdc.toFixed(2)} USDC\``,
+    `• *Slashing Penalties (10%):* \`$${earnings.totalSlashingPenaltiesUsdc.toFixed(2)} USDC\``,
+    `• *Total Transactions:* \`${earnings.count} events\``,
+    ``,
+    `💼 *Active Revenue Streams on Base:*`,
+    `1. *1.0% Protocol Take-Rate:* Deducted automatically from every round pot when \`triggerPayout()\` executes onchain.`,
+    `2. *10% Slashing Liquidation Penalty:* When a delinquent member defaults past grace, 90% of their 1× collateral deposit covers the pot for the turn recipient, and 10% is collected as a protocol fee.`,
+    ``,
+  ];
+
+  if (recent.length > 0) {
+    lines.push(`📜 *Recent Fee Events:*`);
+    for (const r of recent) {
+      const typeStr = r.source === "PAYOUT_FEE" ? "Take-Rate" : "Slashing Penalty";
+      const amtStr = (Number(r.amount) / 1e6).toFixed(2);
+      lines.push(`• \`+$${amtStr} USDC\` (${typeStr}) [Tx](https://sepolia.basescan.org/tx/${r.tx_hash})`);
+    }
+  } else {
+    lines.push(`ℹ️ _No fees collected on Base Sepolia yet. Complete a round payout or test default slashing to generate onchain revenue._`);
+  }
+
+  lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+  await ctx.reply(lines.join("\n"), { parse_mode: "Markdown" });
+}
+
 

@@ -94,6 +94,7 @@ The bot coordinates circle activities directly in group chats or direct messages
 | `/link <wallet>` | Securely links your Telegram account to your Base wallet (protected by roster validation & takeover protection). | `/link 0xFD84...2F5` |
 | `/remind <id>` | Identifies unpaid members for the active round and dispatches friendly DM reminders. | `/remind 1` |
 | `/payout <id>` | Generates a Human-in-the-Loop approval card for organizers to review and trigger round payouts. | `/payout 1` |
+| `/earnings` | Live protocol monetization report: 1.0% take-rate fees, 10% slashing liquidation revenue, and total earned USDC. | `/earnings` |
 | `/help` | Security architecture, smart contract details, and safety invariants. | `/help` |
 | **Natural Language** | Conversational queries powered by Gemini 3.5 Flash with multi-turn memory. | *"How is circle 1 doing?"* or *"Who hasn't paid round 1?"* |
 
@@ -344,7 +345,7 @@ npm run test:adversarial
 
 ### Smart Contract Unit Tests (Hardhat)
 
-Runs the Hardhat Solidity contract unit tests covering round lifecycles, payments, cancellation refunds, and payout distributions (30 tests):
+Runs the Hardhat Solidity contract unit tests covering round lifecycles, payments, cancellation refunds, collateral deposits, slashing distribution, protocol take-rates, and payout distributions (36 tests):
 
 ```bash
 npm run test:contracts
@@ -371,6 +372,36 @@ npm run test:invariant
 # Run extended CI profile (5,000 runs x 200 depth = 1M calls)
 npm run test:invariant:ci
 ```
+
+---
+
+## 💰 Collateral Security Bond, Slashing, & Protocol Monetization
+
+AjoClub features an onchain economic security model and sustainable protocol monetization:
+
+1. **1× Upfront Collateral Bond**: Each verified member deposits an upfront security bond equal to exactly 1× round contribution upon joining a circle (`joinClub()`).
+2. **1.0% Protocol Take-Rate (100 bps)**: Deducted automatically from every round pot when payouts are triggered (`triggerPayout()`) and routed to the protocol treasury (`feeRecipient`).
+3. **90/10 Default Slashing Mechanism**: If a member fails to contribute before the grace period ends, their 1× collateral is automatically liquidated:
+   - **90% of collateral** covers the missing contribution to keep the recipient's pot intact.
+   - **10% of collateral** is collected as a protocol liquidation penalty by `feeRecipient`.
+4. **100% Honest Member Refund**: Non-defaulted members withdraw their full collateral deposit upon circle completion via `claimCollateral(clubId)`.
+5. **Live Earning Verification**: Revenue is tracked in real-time in SQLite and viewable directly via `/earnings` on Telegram. Mainnet deployment is strictly held until monetization is proven on Base Sepolia.
+
+---
+
+## 🔮 Future Roadmap & Architectural Evolution
+
+Detailed roadmap documentation is cataloged in [`future_plans/`](future_plans/):
+- **[01. Near-Term Core Improvements](future_plans/01_near_term_improvements.md)** — Event indexer, Basenames, automated keepers, Oracle Cloud VPS migration
+- **[02. Product Expansion & Protocol Features](future_plans/02_product_expansion_and_features.md)** — Collateral bond & slashing, ERC-4626 vault yield, EAS credit attestations, PWA push alerts
+- **[03. Ecosystem Distribution & Mini Apps](future_plans/03_ecosystem_and_distribution.md)** — Telegram Mini App (TMA), Farcaster Frames, autonomous coordinator
+- **[04. Base Mainnet Production & Security](future_plans/04_mainnet_launch_and_security.md)** — Invariant fuzzing, external audit, Safe multi-sig, mainnet deployment
+
+> [!IMPORTANT]
+> **MANDATORY DIRECTIVE**:
+> > **NONE OF THESE PLANS CAN BE CARRIED OUT WITHOUT APPROVAL OF THE MASTER (JOSEPH)**
+> 
+> Base Mainnet deployment will not proceed until protocol revenue and earning capabilities are conclusively proven on testnet.
 
 ---
 

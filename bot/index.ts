@@ -13,6 +13,7 @@ import {
   handleLink,
   handleRemind,
   handlePayout,
+  handleEarnings,
   handleNaturalMessage,
 } from "./handlers/commands.js";
 import { handleApprovalCallbacks } from "./handlers/callbacks.js";
@@ -58,6 +59,8 @@ export function createBot(): Bot | null {
   bot.command("register", handleLink); // Alias for link
   bot.command("remind", handleRemind);
   bot.command("payout", handlePayout);
+  bot.command("earnings", handleEarnings);
+  bot.command("revenue", handleEarnings); // Alias for earnings
 
   // Interactive inline button callbacks
   bot.on("callback_query:data", handleApprovalCallbacks);

@@ -189,3 +189,33 @@ export function useLeaveClub() {
 
   return { leaveClub, hash, isPending, isConfirming, isSuccess, error };
 }
+
+export function useGetMemberCollateral(clubId: bigint | undefined, member: `0x${string}` | undefined) {
+  return useReadContract({
+    address: AJO_CLUB_ADDRESS,
+    abi: AJO_CLUB_ABI,
+    functionName: "getMemberCollateral",
+    args: clubId !== undefined && member ? [clubId, member] : undefined,
+    query: { enabled: clubId !== undefined && !!member },
+  });
+}
+
+export function useClaimCollateral() {
+  const { writeContractAsync, data: hash, isPending, error } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const ensureChain = useEnsureTargetChain();
+
+  async function claimCollateral(clubId: bigint) {
+    await ensureChain();
+    return writeContractAsync({
+      chainId: CHAIN_ID,
+      address: AJO_CLUB_ADDRESS,
+      abi: AJO_CLUB_ABI,
+      functionName: "claimCollateral",
+      args: [clubId],
+    });
+  }
+
+  return { claimCollateral, hash, isPending, isConfirming, isSuccess, error };
+}
+

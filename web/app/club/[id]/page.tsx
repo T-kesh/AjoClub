@@ -9,6 +9,8 @@ import {
   useTriggerPayout,
   useStartClub,
   useIsVerified,
+  useGetMemberCollateral,
+  useClaimCollateral,
 } from "@/hooks/useAjoClub";
 import { useAccount } from "wagmi";
 import { tokenLabel, tokenDecimals, AJO_CLUB_ADDRESS } from "@/lib/contract";
@@ -42,9 +44,11 @@ export default function ClubPage() {
   const { data: club, isLoading, refetch } = useGetClub(clubId);
   const { data: paymentData, refetch: refetchPayments } = useGetMemberPaymentStatus(clubId);
   const { data: isVerified } = useIsVerified(address);
+  const { data: memberCollateralData, refetch: refetchCollateral } = useGetMemberCollateral(clubId, address);
   const { joinClub, isPending: isJoining } = useJoinClub();
   const { triggerPayout, isPending: isTriggering } = useTriggerPayout();
   const { startClub, isPending: isStarting } = useStartClub();
+  const { claimCollateral, isPending: isClaimingCollateral } = useClaimCollateral();
 
   const [activeTab, setActiveTab] = useState<"timeline" | "members" | "details" | "activity">("timeline");
   const [actionError, setActionError] = useState<string | null>(null);
@@ -115,6 +119,10 @@ export default function ClubPage() {
   const potSize = contribution * BigInt(members.length || 1);
   const cycleDays = Math.round(Number(cycleDuration) / 86400);
 
+  // Collateral state
+  const userCollateral = memberCollateralData ? (memberCollateralData as [bigint, boolean])[0] : 0n;
+  const userCollateralClaimed = memberCollateralData ? (memberCollateralData as [bigint, boolean])[1] : false;
+
   // Time calculations
   const now = Date.now() / 1000;
   const hoursUntilEnd = Number(cycleEnd) > 0 ? (Number(cycleEnd) - now) / 3600 : 0;
@@ -132,6 +140,20 @@ export default function ClubPage() {
       await waitForTransactionReceipt({ hash });
       refetch();
       refetchPayments();
+      refetchCollateral();
+    } catch (e) {
+      setActionError(friendlyError(e as Error));
+    }
+  }
+
+  async function handleClaimCollateral() {
+    if (clubId === undefined) return;
+    setActionError(null);
+    try {
+      const hash = await claimCollateral(clubId);
+      await waitForTransactionReceipt({ hash });
+      refetch();
+      refetchCollateral();
     } catch (e) {
       setActionError(friendlyError(e as Error));
     }
@@ -278,10 +300,38 @@ export default function ClubPage() {
                     <button
                       onClick={handleJoin}
                       disabled={isJoining || members.length >= Number(maxMembers)}
-                      className="btn-green disabled:opacity-50 text-center font-bold text-base shadow-sm"
+                      className="btn-green disabled:opacity-50 text-center font-bold text-sm sm:text-base shadow-sm py-2.5 sm:py-3"
                     >
-                      {isJoining ? "Joining…" : "Join This Club"}
+                      {isJoining ? "Joining…" : `Join (${formatUnits(contribution, decimals)} ${symbol} Bond)`}
                     </button>
+                  )
+                ) : status === 2 && isMember ? (
+                  userCollateral > 0n && !userCollateralClaimed ? (
+                    <button
+                      onClick={handleClaimCollateral}
+                      disabled={isClaimingCollateral}
+                      className="btn-green text-center font-bold flex items-center justify-center gap-2 text-sm sm:text-base shadow-sm"
+                    >
+                      <span>💸</span> {isClaimingCollateral ? "Claiming…" : `Claim Collateral (${formatUnits(userCollateral, decimals)} ${symbol})`}
+                    </button>
+                  ) : userCollateralClaimed ? (
+                    <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 p-4 border border-emerald-200 dark:border-emerald-900/60 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Security Bond</p>
+                        <p className="mt-0.5 font-bold text-sm text-emerald-800 dark:text-emerald-200">
+                          ✓ Refunded ({formatUnits(contribution, decimals)} ${symbol})
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-red-50 dark:bg-red-950/40 p-4 border border-red-200 dark:border-red-900/60 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-red-500 font-medium">Security Bond</p>
+                        <p className="mt-0.5 font-bold text-sm text-red-700 dark:text-red-300">
+                          ⚠️ Slashed (Defaulted Round)
+                        </p>
+                      </div>
+                    </div>
                   )
                 ) : (
                   <div className="rounded-2xl bg-slate-50 dark:bg-[#071F17]/60 p-4 border border-slate-100 dark:border-[#164738]/60 flex items-center justify-between">
@@ -514,6 +564,9 @@ export default function ClubPage() {
                 ["Cycle Duration", `${cycleDays} days`],
                 ["Members Filled", `${members.length} / ${maxMembers.toString()}`],
                 ["Current Pot", `${formatUnits(potSize, decimals)} ${symbol}`],
+                ["Security Collateral", `${formatUnits(contribution, decimals)} ${symbol} (1× Bond)`],
+                ["Protocol Take-Rate", "1.0% on payout"],
+                ["Slashing Penalty", "10% liquidation fee"],
                 [
                   "Your Payout",
                   isMember ? `Round ${userIndex + 1}` : "Join to participate",
@@ -565,7 +618,7 @@ export default function ClubPage() {
                     disabled={isJoining || members.length >= Number(maxMembers)}
                     className="w-full btn-green !py-3.5 text-base font-bold shadow-md"
                   >
-                    {isJoining ? "Joining…" : "Join Circle"}
+                    {isJoining ? "Joining…" : `Join Circle (${formatUnits(contribution, decimals)} ${symbol} Bond)`}
                   </button>
                 )
               )}
@@ -599,9 +652,23 @@ export default function ClubPage() {
               )}
 
               {status === 2 && (
-                <p className="text-center text-xs text-slate-500 py-1 font-semibold">
-                  This circle has completed all rounds.
-                </p>
+                isMember && userCollateral > 0n && !userCollateralClaimed ? (
+                  <button
+                    onClick={handleClaimCollateral}
+                    disabled={isClaimingCollateral}
+                    className="w-full btn-green !py-3.5 text-base font-bold shadow-md flex items-center justify-center gap-2"
+                  >
+                    <span>💸</span> {isClaimingCollateral ? "Claiming Bond..." : `Claim Collateral Bond (${formatUnits(userCollateral, decimals)} ${symbol})`}
+                  </button>
+                ) : isMember && userCollateralClaimed ? (
+                  <p className="text-center text-xs text-emerald-600 dark:text-emerald-400 py-1 font-semibold">
+                    ✓ You have claimed back your {formatUnits(contribution, decimals)} {symbol} security bond.
+                  </p>
+                ) : (
+                  <p className="text-center text-xs text-slate-500 py-1 font-semibold">
+                    This circle has completed all rounds.
+                  </p>
+                )
               )}
             </>
           )}
