@@ -18,8 +18,9 @@
     "test:invariant:ci": "npm --prefix contracts run test:invariant:ci",
     "compile:contracts": "npm --prefix contracts run compile",
     "test:contracts": "npm --prefix contracts run test",
-    "build": "npm --prefix web run build",
-    "start": "npm --prefix web run start",
+    "build": "echo 'AjoClub bot daemon build ready'",
+    "start": "npm run bot",
+    "web:start": "npm --prefix web run start",
     "web:dev": "npm --prefix web run dev",
     "web:build": "npm --prefix web run build",
     "web:lint": "npm --prefix web run lint"
