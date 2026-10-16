@@ -118,9 +118,18 @@ export function startHealthServer(port: number | string = process.env.PORT || 30
   return server;
 }
 
+import { initializeDatabase } from "../db/init.js";
+
 export async function startBot(): Promise<void> {
   // 1. Immediately bind HTTP health check port (required for Render Web Service)
   startHealthServer();
+
+  // 2. Automatically ensure SQLite schema and tables exist on startup
+  try {
+    initializeDatabase();
+  } catch (err: any) {
+    console.warn("⚠️ [DAEMON] Database schema initialization warning:", err.message);
+  }
 
   const bot = createBot();
   if (!bot) {

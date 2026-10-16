@@ -20,6 +20,17 @@ class DatabaseClient {
     // Enable WAL mode and foreign keys for high performance and integrity
     this.db.exec("PRAGMA journal_mode = WAL;");
     this.db.exec("PRAGMA foreign_keys = ON;");
+
+    // Automatically ensure tables exist on startup
+    this.ensureSchema();
+  }
+
+  public ensureSchema(schemaPath?: string): void {
+    try {
+      this.initSchema(schemaPath);
+    } catch (err: any) {
+      console.warn("⚠️ [DB] Auto-schema init warning:", err.message);
+    }
   }
 
   public initSchema(schemaPath?: string): void {
