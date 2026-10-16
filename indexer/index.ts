@@ -19,6 +19,8 @@ import {
   membersRepo,
   contributionsRepo,
   payoutsRepo,
+  protocolEarningsRepo,
+  collateralRecordsRepo,
   indexerRepo,
   CircleStatus,
 } from "../db/index.js";
@@ -33,6 +35,12 @@ const DEFAULT_POLL_INTERVAL_MS = 4000;
 export const AJO_CLUB_EVENTS_ABI = parseAbi([
   "event ClubCreated(uint256 indexed clubId, address indexed creator, string name, address token, uint256 contribution)",
   "event MemberJoined(uint256 indexed clubId, address indexed member)",
+  "event CollateralDeposited(uint256 indexed clubId, address indexed member, uint256 amount)",
+  "event CollateralRefunded(uint256 indexed clubId, address indexed member, uint256 amount)",
+  "event CollateralSlashed(uint256 indexed clubId, address indexed member, uint256 round, uint256 potCover, uint256 penalty)",
+  "event ProtocolFeeCollected(uint256 indexed clubId, uint256 feeAmount)",
+  "event ProtocolFeeUpdated(uint256 newFeeBps)",
+  "event FeeRecipientUpdated(address newRecipient)",
   "event ContributionMade(uint256 indexed clubId, address indexed member, uint256 round)",
   "event PayoutSent(uint256 indexed clubId, address indexed recipient, uint256 amount, uint256 round)",
   "event ClubComplete(uint256 indexed clubId)",
@@ -250,6 +258,18 @@ export class AjoClubIndexer {
           break;
         case "MemberJoined":
           await this.handleMemberJoined(args, log, isBackfill);
+          break;
+        case "CollateralDeposited":
+          await this.handleCollateralDeposited(args, log, isBackfill);
+          break;
+        case "CollateralRefunded":
+          await this.handleCollateralRefunded(args, log, isBackfill);
+          break;
+        case "CollateralSlashed":
+          await this.handleCollateralSlashed(args, log, isBackfill);
+          break;
+        case "ProtocolFeeCollected":
+          await this.handleProtocolFeeCollected(args, log, isBackfill);
           break;
         case "ContributionMade":
           await this.handleContributionMade(args, log, isBackfill);
@@ -609,6 +629,149 @@ export class AjoClubIndexer {
       `UPDATE members SET status = 'LEFT' WHERE circle_id = ? AND wallet_address = ?`,
       [circle.id, memberAddress]
     );
+  }
+
+  private async handleCollateralDeposited(args: any, log: Log, isBackfill: boolean): Promise<void> {
+    const clubId = Number(args.clubId);
+    const memberAddress = (args.member as string).toLowerCase();
+    const amount = (args.amount as bigint).toString();
+    const txHash = log.transactionHash as string;
+    const blockNumber = Number(log.blockNumber ?? 0);
+    const now = Math.floor(Date.now() / 1000);
+
+    console.log(`[INDEXER] 🛡️ Detected CollateralDeposited: Club #${clubId} member ${memberAddress.slice(0, 6)}…${memberAddress.slice(-4)} (${formatUnits(args.amount as bigint, 6)} USDC)`);
+
+    const circle = circlesRepo.getByContractCircleIdAndAddress(clubId, this.contractAddress);
+    if (!circle) return;
+
+    membersRepo.recordCollateralDeposit(circle.id, memberAddress, amount);
+    collateralRecordsRepo.record({
+      circle_id: circle.id,
+      member_address: memberAddress,
+      event_type: "DEPOSITED",
+      amount,
+      penalty_amount: "0",
+      tx_hash: txHash,
+      block_number: blockNumber,
+      timestamp: now,
+    });
+  }
+
+  private async handleCollateralRefunded(args: any, log: Log, isBackfill: boolean): Promise<void> {
+    const clubId = Number(args.clubId);
+    const memberAddress = (args.member as string).toLowerCase();
+    const amount = (args.amount as bigint).toString();
+    const txHash = log.transactionHash as string;
+    const blockNumber = Number(log.blockNumber ?? 0);
+    const now = Math.floor(Date.now() / 1000);
+
+    console.log(`[INDEXER] 💸 Detected CollateralRefunded: Club #${clubId} member ${memberAddress.slice(0, 6)}…${memberAddress.slice(-4)} (${formatUnits(args.amount as bigint, 6)} USDC)`);
+
+    const circle = circlesRepo.getByContractCircleIdAndAddress(clubId, this.contractAddress);
+    if (!circle) return;
+
+    membersRepo.recordCollateralRefund(circle.id, memberAddress);
+    collateralRecordsRepo.record({
+      circle_id: circle.id,
+      member_address: memberAddress,
+      event_type: "REFUNDED",
+      amount,
+      penalty_amount: "0",
+      tx_hash: txHash,
+      block_number: blockNumber,
+      timestamp: now,
+    });
+
+    if (!isBackfill && circle.telegram_chat_id) {
+      const shortAddr = `${memberAddress.slice(0, 6)}…${memberAddress.slice(-4)}`;
+      const unitAmount = formatUnits(args.amount as bigint, circle.token_decimals);
+      const text = `💸 *Collateral Refunded on Base!*\n\nMember \`${shortAddr}\` claimed back their *${unitAmount} ${circle.token_symbol}* security bond after completing all circle obligations.`;
+      await sendTelegramNotification(circle.telegram_chat_id, text);
+    }
+  }
+
+  private async handleCollateralSlashed(args: any, log: Log, isBackfill: boolean): Promise<void> {
+    const clubId = Number(args.clubId);
+    const memberAddress = (args.member as string).toLowerCase();
+    const round = Number(args.round);
+    const potCover = (args.potCover as bigint).toString();
+    const penalty = (args.penalty as bigint).toString();
+    const totalSlashed = ((args.potCover as bigint) + (args.penalty as bigint)).toString();
+    const txHash = log.transactionHash as string;
+    const blockNumber = Number(log.blockNumber ?? 0);
+    const now = Math.floor(Date.now() / 1000);
+
+    console.log(`[INDEXER] ⚡ Detected CollateralSlashed: Club #${clubId} member ${memberAddress.slice(0, 6)}…${memberAddress.slice(-4)} (potCover: ${formatUnits(args.potCover as bigint, 6)}, penalty: ${formatUnits(args.penalty as bigint, 6)})`);
+
+    const circle = circlesRepo.getByContractCircleIdAndAddress(clubId, this.contractAddress);
+    if (!circle) return;
+
+    membersRepo.recordCollateralSlash(circle.id, memberAddress);
+    collateralRecordsRepo.record({
+      circle_id: circle.id,
+      member_address: memberAddress,
+      event_type: "SLASHED",
+      amount: totalSlashed,
+      penalty_amount: penalty,
+      tx_hash: txHash,
+      block_number: blockNumber,
+      timestamp: now,
+    });
+
+    // Record protocol penalty fee in earnings
+    protocolEarningsRepo.record({
+      circle_id: circle.id,
+      source: "SLASHING_PENALTY",
+      amount: penalty,
+      token_address: circle.token_address,
+      token_symbol: circle.token_symbol,
+      tx_hash: txHash,
+      round,
+      block_number: blockNumber,
+      timestamp: now,
+    });
+
+    if (!isBackfill && circle.telegram_chat_id) {
+      const shortAddr = `${memberAddress.slice(0, 6)}…${memberAddress.slice(-4)}`;
+      const unitCover = formatUnits(args.potCover as bigint, circle.token_decimals);
+      const unitPenalty = formatUnits(args.penalty as bigint, circle.token_decimals);
+      const text = [
+        `⚡ *Collateral Slashed for Default!*`,
+        ``,
+        `• *Circle:* ${circle.name}`,
+        `• *Defaulted Member:* \`${shortAddr}\` (Round #${round + 1})`,
+        `• *Pot Compensation (90%):* *+${unitCover} ${circle.token_symbol}*`,
+        `• *Protocol Liquidation Penalty (10%):* *${unitPenalty} ${circle.token_symbol}*`,
+        ``,
+        `_The recipient's pot remains protected by the security deposit._`,
+      ].join("\n");
+      await sendTelegramNotification(circle.telegram_chat_id, text);
+    }
+  }
+
+  private async handleProtocolFeeCollected(args: any, log: Log, isBackfill: boolean): Promise<void> {
+    const clubId = Number(args.clubId);
+    const feeAmount = (args.feeAmount as bigint).toString();
+    const txHash = log.transactionHash as string;
+    const blockNumber = Number(log.blockNumber ?? 0);
+    const now = Math.floor(Date.now() / 1000);
+
+    console.log(`[INDEXER] 💵 Detected ProtocolFeeCollected: Club #${clubId} (${formatUnits(args.feeAmount as bigint, 6)} USDC)`);
+
+    const circle = circlesRepo.getByContractCircleIdAndAddress(clubId, this.contractAddress);
+    if (!circle) return;
+
+    protocolEarningsRepo.record({
+      circle_id: circle.id,
+      source: "PAYOUT_FEE",
+      amount: feeAmount,
+      token_address: circle.token_address,
+      token_symbol: circle.token_symbol,
+      tx_hash: txHash,
+      round: circle.current_round,
+      block_number: blockNumber,
+      timestamp: now,
+    });
   }
 }
 

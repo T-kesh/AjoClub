@@ -5,6 +5,7 @@ import {
   auditRepo,
   approvalsRepo,
   payoutsRepo,
+  protocolEarningsRepo,
 } from "./index.js";
 
 async function runDatabaseTests() {
@@ -102,6 +103,46 @@ async function runDatabaseTests() {
   approvalsRepo.resolve(approval.id, "APPROVED", "12345678");
   const resolved = approvalsRepo.getById(approval.id);
   console.log(`✅ Approval request resolved: Status is now ${resolved?.status}`);
+
+  // 6. Test Collateral & Slashing Records
+  console.log("\n5️⃣ Testing Collateral & Slashing records...");
+  membersRepo.recordCollateralDeposit(circle.id, member1.wallet_address, "50000000");
+  const updatedM1 = membersRepo.getByWallet(circle.id, member1.wallet_address);
+  if (updatedM1?.collateral_amount !== "50000000") throw new Error("Collateral deposit amount mismatch");
+
+  membersRepo.recordCollateralSlash(circle.id, member2.wallet_address);
+  const updatedM2 = membersRepo.getByWallet(circle.id, member2.wallet_address);
+  if (updatedM2?.is_collateral_slashed !== 1 || updatedM2?.collateral_amount !== "0") throw new Error("Collateral slash mismatch");
+  console.log("✅ Member collateral deposit and slashing state verified in DB.");
+
+  // 7. Test Protocol Earnings Tracking
+  console.log("\n6️⃣ Testing Protocol Earnings tracking...");
+  protocolEarningsRepo.record({
+    circle_id: circle.id,
+    source: "PAYOUT_FEE",
+    amount: "1500000", // 1.50 USDC (1.0% fee)
+    token_address: circle.token_address,
+    token_symbol: circle.token_symbol,
+    tx_hash: "0xfee001",
+    round: 0,
+    block_number: 123456,
+    timestamp: Math.floor(Date.now() / 1000),
+  });
+
+  protocolEarningsRepo.record({
+    circle_id: circle.id,
+    source: "SLASHING_PENALTY",
+    amount: "5000000", // 5.00 USDC (10% penalty)
+    token_address: circle.token_address,
+    token_symbol: circle.token_symbol,
+    tx_hash: "0xfee002",
+    round: 0,
+    block_number: 123457,
+    timestamp: Math.floor(Date.now() / 1000),
+  });
+
+  const earnings = protocolEarningsRepo.getTotalEarnings();
+  console.log(`✅ Protocol Earnings: Total Revenue = $${earnings.totalRevenueUsdc} USDC ($${earnings.totalPayoutFeesUsdc} take-rate fees, $${earnings.totalSlashingPenaltiesUsdc} liquidation penalties across ${earnings.count} events)`);
 
   console.log("\n🎉 All SQLite tests passed successfully!");
 }

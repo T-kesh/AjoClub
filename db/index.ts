@@ -7,6 +7,8 @@ import {
   ApprovalRequestRow,
   AuditLogRow,
   ReminderRow,
+  ProtocolEarningRow,
+  CollateralRecordRow,
   CircleStatus,
   ApprovalStatus,
   AuditEventType,
@@ -357,6 +359,27 @@ export const membersRepo = {
   resetRoundPaymentStatus(circleId: number): void {
     db.run(`UPDATE members SET has_paid_current_round = 0 WHERE circle_id = ?`, [circleId]);
   },
+
+  recordCollateralDeposit(circleId: number, wallet: string, amount: string): void {
+    db.run(
+      `UPDATE members SET collateral_amount = ? WHERE circle_id = ? AND wallet_address = ?`,
+      [amount, circleId, wallet.toLowerCase()]
+    );
+  },
+
+  recordCollateralRefund(circleId: number, wallet: string): void {
+    db.run(
+      `UPDATE members SET collateral_amount = '0', collateral_claimed = 1 WHERE circle_id = ? AND wallet_address = ?`,
+      [circleId, wallet.toLowerCase()]
+    );
+  },
+
+  recordCollateralSlash(circleId: number, wallet: string): void {
+    db.run(
+      `UPDATE members SET collateral_amount = '0', is_collateral_slashed = 1 WHERE circle_id = ? AND wallet_address = ?`,
+      [circleId, wallet.toLowerCase()]
+    );
+  },
 };
 
 
@@ -573,4 +596,96 @@ export const indexerRepo = {
     );
   },
 };
+
+// ============================================================================
+// Protocol Earnings Repository (Monetization & Revenue Tracking)
+// ============================================================================
+export const protocolEarningsRepo = {
+  record(earning: Omit<ProtocolEarningRow, "id">): ProtocolEarningRow {
+    const result = db.run(
+      `INSERT INTO protocol_earnings (circle_id, source, amount, token_address, token_symbol, tx_hash, round, block_number, timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        earning.circle_id,
+        earning.source,
+        earning.amount,
+        earning.token_address.toLowerCase(),
+        earning.token_symbol,
+        earning.tx_hash.toLowerCase(),
+        earning.round,
+        earning.block_number,
+        earning.timestamp,
+      ]
+    );
+
+    return db.get<ProtocolEarningRow>(`SELECT * FROM protocol_earnings WHERE id = ?`, [Number(result.lastInsertRowid)])!;
+  },
+
+  getAll(): ProtocolEarningRow[] {
+    return db.query<ProtocolEarningRow>(`SELECT * FROM protocol_earnings ORDER BY timestamp DESC`);
+  },
+
+  getByCircle(circleId: number): ProtocolEarningRow[] {
+    return db.query<ProtocolEarningRow>(`SELECT * FROM protocol_earnings WHERE circle_id = ? ORDER BY timestamp DESC`, [circleId]);
+  },
+
+  getTotalEarnings(): { totalPayoutFeesUsdc: number; totalSlashingPenaltiesUsdc: number; totalRevenueUsdc: number; count: number } {
+    const rows = db.query<ProtocolEarningRow>(`SELECT * FROM protocol_earnings`);
+    let totalPayoutFees = 0n;
+    let totalPenalties = 0n;
+
+    for (const r of rows) {
+      const val = BigInt(r.amount);
+      if (r.source === "PAYOUT_FEE") {
+        totalPayoutFees += val;
+      } else if (r.source === "SLASHING_PENALTY") {
+        totalPenalties += val;
+      }
+    }
+
+    const totalRaw = totalPayoutFees + totalPenalties;
+    return {
+      totalPayoutFeesUsdc: Number(totalPayoutFees) / 1e6,
+      totalSlashingPenaltiesUsdc: Number(totalPenalties) / 1e6,
+      totalRevenueUsdc: Number(totalRaw) / 1e6,
+      count: rows.length,
+    };
+  },
+};
+
+// ============================================================================
+// Collateral Records Repository
+// ============================================================================
+export const collateralRecordsRepo = {
+  record(record: Omit<CollateralRecordRow, "id">): CollateralRecordRow {
+    const result = db.run(
+      `INSERT INTO collateral_records (circle_id, member_address, event_type, amount, penalty_amount, tx_hash, block_number, timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        record.circle_id,
+        record.member_address.toLowerCase(),
+        record.event_type,
+        record.amount,
+        record.penalty_amount,
+        record.tx_hash.toLowerCase(),
+        record.block_number,
+        record.timestamp,
+      ]
+    );
+
+    return db.get<CollateralRecordRow>(`SELECT * FROM collateral_records WHERE id = ?`, [Number(result.lastInsertRowid)])!;
+  },
+
+  getByCircle(circleId: number): CollateralRecordRow[] {
+    return db.query<CollateralRecordRow>(`SELECT * FROM collateral_records WHERE circle_id = ? ORDER BY timestamp DESC`, [circleId]);
+  },
+
+  getByMember(circleId: number, memberAddress: string): CollateralRecordRow[] {
+    return db.query<CollateralRecordRow>(
+      `SELECT * FROM collateral_records WHERE circle_id = ? AND lower(member_address) = lower(?) ORDER BY timestamp DESC`,
+      [circleId, memberAddress.toLowerCase()]
+    );
+  },
+};
+
 

@@ -39,6 +39,9 @@ export interface MemberRow {
   has_paid_current_round: number; // 0 or 1
   total_contributed: string;
   total_received: string;
+  collateral_amount?: string;
+  is_collateral_slashed?: number; // 0 or 1
+  collateral_claimed?: number; // 0 or 1
   status: MemberStatus;
   joined_at: number;
 }
@@ -115,5 +118,30 @@ export interface ProcessedEventRow {
   event_name: string;
   block_number: number;
   processed_at: number;
+}
+
+export interface ProtocolEarningRow {
+  id: number;
+  circle_id: number | null;
+  source: 'PAYOUT_FEE' | 'SLASHING_PENALTY';
+  amount: string;
+  token_address: string;
+  token_symbol: string;
+  tx_hash: string;
+  round: number | null;
+  block_number: number | null;
+  timestamp: number;
+}
+
+export interface CollateralRecordRow {
+  id: number;
+  circle_id: number;
+  member_address: string;
+  event_type: 'DEPOSITED' | 'REFUNDED' | 'SLASHED';
+  amount: string;
+  penalty_amount: string;
+  tx_hash: string;
+  block_number: number | null;
+  timestamp: number;
 }
 

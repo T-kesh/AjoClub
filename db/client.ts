@@ -28,6 +28,10 @@ class DatabaseClient {
   public ensureSchema(schemaPath?: string): void {
     try {
       this.initSchema(schemaPath);
+      // Safe non-destructive column additions for existing SQLite databases
+      try { this.db.exec("ALTER TABLE members ADD COLUMN collateral_amount TEXT NOT NULL DEFAULT '0';"); } catch {}
+      try { this.db.exec("ALTER TABLE members ADD COLUMN is_collateral_slashed INTEGER NOT NULL DEFAULT 0;"); } catch {}
+      try { this.db.exec("ALTER TABLE members ADD COLUMN collateral_claimed INTEGER NOT NULL DEFAULT 0;"); } catch {}
     } catch (err: any) {
       console.warn("⚠️ [DB] Auto-schema init warning:", err.message);
     }

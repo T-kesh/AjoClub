@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS members (
     has_paid_current_round INTEGER NOT NULL DEFAULT 0, -- 0 = false, 1 = true
     total_contributed TEXT NOT NULL DEFAULT '0',
     total_received TEXT NOT NULL DEFAULT '0',
+    collateral_amount TEXT NOT NULL DEFAULT '0',
+    is_collateral_slashed INTEGER NOT NULL DEFAULT 0,
+    collateral_claimed INTEGER NOT NULL DEFAULT 0,
     status TEXT NOT NULL DEFAULT 'ACTIVE',-- 'ACTIVE', 'DEFAULTED', 'LEFT'
     joined_at INTEGER NOT NULL,
     UNIQUE(circle_id, wallet_address),
@@ -143,4 +146,36 @@ CREATE TABLE IF NOT EXISTS processed_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_processed_events_block ON processed_events(block_number);
+
+-- 9. Protocol Earnings & Revenue Tracking
+CREATE TABLE IF NOT EXISTS protocol_earnings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    circle_id INTEGER REFERENCES circles(id) ON DELETE SET NULL,
+    source TEXT NOT NULL,                  -- 'PAYOUT_FEE' (1.0%), 'SLASHING_PENALTY' (10%)
+    amount TEXT NOT NULL,                  -- Token amount in units (e.g. '1.50' or '1500000')
+    token_address TEXT NOT NULL,
+    token_symbol TEXT NOT NULL DEFAULT 'USDC',
+    tx_hash TEXT NOT NULL,
+    round INTEGER,
+    block_number INTEGER,
+    timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_protocol_earnings_circle ON protocol_earnings(circle_id);
+CREATE INDEX IF NOT EXISTS idx_protocol_earnings_source ON protocol_earnings(source);
+
+-- 10. Collateral Transactions
+CREATE TABLE IF NOT EXISTS collateral_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    circle_id INTEGER NOT NULL REFERENCES circles(id) ON DELETE CASCADE,
+    member_address TEXT NOT NULL,
+    event_type TEXT NOT NULL,              -- 'DEPOSITED', 'REFUNDED', 'SLASHED'
+    amount TEXT NOT NULL,
+    penalty_amount TEXT NOT NULL DEFAULT '0',
+    tx_hash TEXT NOT NULL,
+    block_number INTEGER,
+    timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_collateral_circle_member ON collateral_records(circle_id, member_address);
 
