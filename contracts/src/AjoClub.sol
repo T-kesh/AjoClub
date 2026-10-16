@@ -41,6 +41,13 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
     // Stored configId registered atomically in constructor via Hub
     bytes32 public verificationConfigId;
 
+    // Collateral & Protocol Monetization
+    uint256 public protocolFeeBps = 100; // 1.0% (100 basis points)
+    uint256 public constant SLASHING_FEE_BPS = 1000; // 10% penalty fee on slashed collateral
+    address public feeRecipient;
+    mapping(uint256 => mapping(address => uint256)) public memberCollateral;
+    mapping(uint256 => mapping(address => bool)) public collateralClaimed;
+
     event ClubCreated(uint256 indexed clubId, address indexed creator, string name, address token, uint256 contribution);
     event MemberJoined(uint256 indexed clubId, address indexed member);
     event ContributionMade(uint256 indexed clubId, address indexed member, uint256 round);
@@ -51,6 +58,12 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
     event ClubCancelled(uint256 indexed clubId, address indexed cancelledBy);
     event MemberLeft(uint256 indexed clubId, address indexed member);
     event TokenAllowed(address indexed token, bool allowed);
+    event CollateralDeposited(uint256 indexed clubId, address indexed member, uint256 amount);
+    event CollateralRefunded(uint256 indexed clubId, address indexed member, uint256 amount);
+    event CollateralSlashed(uint256 indexed clubId, address indexed member, uint256 indexed round, uint256 potCover, uint256 penaltyFee);
+    event ProtocolFeeUpdated(uint256 newFeeBps);
+    event FeeRecipientUpdated(address newRecipient);
+    event ProtocolFeeCollected(uint256 indexed clubId, uint256 amount);
 
     // Hub addresses
     address private constant HUB_BASE_MAINNET = 0x6758c0C2A297E6878Bb9294916Afd2d099232977;
@@ -88,6 +101,8 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
         allowedTokens[0x765DE816845861e75A25fCA122bb6898B8B1282a] = true; // cUSD
         allowedTokens[0xD8763CBa276a3738E6DE85b4b3bF5FDed6D6cA73] = true; // cEUR
         allowedTokens[0x456a3D042C0DbD3db53D5489e98dFb038553B0d0] = true; // cKES
+
+        feeRecipient = msg.sender;
     }
 
     /// @notice Allows the contract owner to allowlist or disallow specific tokens.
@@ -95,6 +110,20 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
         require(token != address(0), "Invalid token address");
         allowedTokens[token] = allowed;
         emit TokenAllowed(token, allowed);
+    }
+
+    /// @notice Allows the contract owner to update the protocol take-rate fee in basis points (max 500 bps = 5%).
+    function setProtocolFee(uint256 newFeeBps) external onlyOwner {
+        require(newFeeBps <= 500, "Fee cannot exceed 5%");
+        protocolFeeBps = newFeeBps;
+        emit ProtocolFeeUpdated(newFeeBps);
+    }
+
+    /// @notice Allows the contract owner to update the protocol fee recipient treasury address.
+    function setFeeRecipient(address newRecipient) external onlyOwner {
+        require(newRecipient != address(0), "Invalid fee recipient");
+        feeRecipient = newRecipient;
+        emit FeeRecipientUpdated(newRecipient);
     }
 
     /// @notice Allows the contract owner or agent relayer to verify a member directly (e.g. via Coinbase Verifications / Basename).
@@ -163,7 +192,7 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
         emit ClubCreated(clubId, msg.sender, name, token, contribution);
     }
 
-    function joinClub(uint256 clubId) external {
+    function joinClub(uint256 clubId) external nonReentrant {
         Club storage c = clubs[clubId];
         require(c.status == ClubStatus.OPEN, "Club not open");
         require(!isMember[clubId][msg.sender], "Already a member");
@@ -171,9 +200,16 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
         require(isVerified[msg.sender], "Must be Self-verified");
 
         isMember[clubId][msg.sender] = true;
+        memberCollateral[clubId][msg.sender] = c.contribution;
         c.members.push(msg.sender);
 
         emit MemberJoined(clubId, msg.sender);
+        emit CollateralDeposited(clubId, msg.sender, c.contribution);
+
+        require(
+            IERC20(c.token).transferFrom(msg.sender, address(this), c.contribution),
+            "Collateral transfer failed"
+        );
     }
 
     function startClub(uint256 clubId) external {
@@ -195,12 +231,22 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
         c.status = ClubStatus.CANCELLED;
         emit ClubCancelled(clubId, msg.sender);
 
-        // Refund any contributions made by members
+        // Refund any contributions and collateral deposited by members
         for (uint256 i = 0; i < c.members.length; i++) {
             address member = c.members[i];
+            uint256 refundAmount = 0;
             if (hasPaid[clubId][member]) {
                 hasPaid[clubId][member] = false;
-                require(IERC20(c.token).transfer(member, c.contribution), "Refund failed");
+                refundAmount += c.contribution;
+            }
+            uint256 collateral = memberCollateral[clubId][member];
+            if (collateral > 0) {
+                memberCollateral[clubId][member] = 0;
+                refundAmount += collateral;
+                emit CollateralRefunded(clubId, member, collateral);
+            }
+            if (refundAmount > 0) {
+                require(IERC20(c.token).transfer(member, refundAmount), "Refund failed");
             }
         }
     }
@@ -213,7 +259,14 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
         uint256 refundAmount = 0;
         if (hasPaid[clubId][msg.sender]) {
             hasPaid[clubId][msg.sender] = false;
-            refundAmount = c.contribution;
+            refundAmount += c.contribution;
+        }
+
+        uint256 collateral = memberCollateral[clubId][msg.sender];
+        if (collateral > 0) {
+            memberCollateral[clubId][msg.sender] = 0;
+            refundAmount += collateral;
+            emit CollateralRefunded(clubId, msg.sender, collateral);
         }
 
         // Remove from members array
@@ -264,23 +317,72 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
             }
         }
 
-        // Calculate payout based on members who actually paid
         uint256 payingMembers = 0;
+        uint256 slashedPotCover = 0;
+        uint256 totalPenalties = 0;
+
         for (uint256 i = 0; i < c.members.length; i++) {
-            if (hasPaid[clubId][c.members[i]]) {
+            address member = c.members[i];
+            if (hasPaid[clubId][member]) {
                 payingMembers++;
+            } else {
+                // Member defaulted on this round
+                if (!hasDefaulted[clubId][c.currentRound][member]) {
+                    hasDefaulted[clubId][c.currentRound][member] = true;
+                    emit MemberDefaulted(clubId, member, c.currentRound);
+                }
+
+                // If member still has collateral deposited, slash it:
+                // 90% covers missing contribution for the pot, 10% penalty fee to protocol
+                uint256 col = memberCollateral[clubId][member];
+                if (col > 0) {
+                    memberCollateral[clubId][member] = 0;
+                    uint256 penalty = (col * SLASHING_FEE_BPS) / 10000;
+                    uint256 potCover = col - penalty;
+                    slashedPotCover += potCover;
+                    totalPenalties += penalty;
+                    emit CollateralSlashed(clubId, member, c.currentRound, potCover, penalty);
+                }
             }
         }
-        require(payingMembers > 0, "No members paid");
+
+        uint256 roundPot = (c.contribution * payingMembers) + slashedPotCover;
+        require(roundPot > 0, "No funds for payout");
 
         address recipient = c.members[c.currentRound];
-        uint256 payout = c.contribution * payingMembers;
         uint256 roundPaid = c.currentRound;
 
-        _advanceCycle(clubId);
-        emit PayoutSent(clubId, recipient, payout, roundPaid);
+        // Protocol Take-Rate (1.0%)
+        uint256 protocolFee = (roundPot * protocolFeeBps) / 10000;
+        uint256 netPayout = roundPot - protocolFee;
+        uint256 totalProtocolFees = protocolFee + totalPenalties;
 
-        require(IERC20(c.token).transfer(recipient, payout), "Payout failed");
+        _advanceCycle(clubId);
+        emit PayoutSent(clubId, recipient, netPayout, roundPaid);
+
+        if (totalProtocolFees > 0 && feeRecipient != address(0)) {
+            emit ProtocolFeeCollected(clubId, totalProtocolFees);
+            require(IERC20(c.token).transfer(feeRecipient, totalProtocolFees), "Fee transfer failed");
+        }
+
+        require(IERC20(c.token).transfer(recipient, netPayout), "Payout failed");
+    }
+
+    /// @notice Allows non-defaulted members to reclaim their collateral after club completion.
+    function claimCollateral(uint256 clubId) external nonReentrant {
+        Club storage c = clubs[clubId];
+        require(c.status == ClubStatus.COMPLETE, "Club not complete");
+        require(isMember[clubId][msg.sender], "Not a member");
+        require(!collateralClaimed[clubId][msg.sender], "Collateral already claimed");
+
+        uint256 collateral = memberCollateral[clubId][msg.sender];
+        require(collateral > 0, "No collateral to claim");
+
+        collateralClaimed[clubId][msg.sender] = true;
+        memberCollateral[clubId][msg.sender] = 0;
+        emit CollateralRefunded(clubId, msg.sender, collateral);
+
+        require(IERC20(c.token).transfer(msg.sender, collateral), "Collateral refund failed");
     }
 
     function _advanceCycle(uint256 clubId) internal {
@@ -312,6 +414,13 @@ contract AjoClub is SelfVerificationRoot, Ownable, ReentrancyGuard {
                 emit MemberDefaulted(clubId, member, c.currentRound);
             }
         }
+    }
+
+    function getMemberCollateral(uint256 clubId, address member) external view returns (
+        uint256 collateral,
+        bool claimed
+    ) {
+        return (memberCollateral[clubId][member], collateralClaimed[clubId][member]);
     }
 
     // ── Views ──────────────────────────────────────────────────────────────────

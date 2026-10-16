@@ -156,7 +156,7 @@ describe("AjoClub", function () {
       await expect(ajoClub.triggerPayout(clubId)).to.be.revertedWith("Cycle not ended");
     });
 
-    it("correct recipient receives full pot", async () => {
+    it("correct recipient receives full pot minus protocol fee", async () => {
       await ajoClub.connect(alice).contribute(clubId);
       await ajoClub.connect(bob).contribute(clubId);
       await ajoClub.connect(carol).contribute(clubId);
@@ -165,11 +165,24 @@ describe("AjoClub", function () {
 
       const recipient = alice.address; // round 0 → members[0] = alice
       const balBefore = await cUSD.balanceOf(recipient);
+      const feeRecipient = await ajoClub.feeRecipient();
+      const feeBalBefore = await cUSD.balanceOf(feeRecipient);
+
+      const grossPot = CONTRIBUTION * 3n; // 150 USDC
+      const fee = (grossPot * 100n) / 10000n; // 1.5 USDC (1%)
+      const netPayout = grossPot - fee; // 148.5 USDC
+
       await expect(ajoClub.triggerPayout(clubId))
         .to.emit(ajoClub, "PayoutSent")
-        .withArgs(clubId, recipient, CONTRIBUTION * 3n, 0n);
+        .withArgs(clubId, recipient, netPayout, 0n)
+        .to.emit(ajoClub, "ProtocolFeeCollected")
+        .withArgs(clubId, fee);
+
       const balAfter = await cUSD.balanceOf(recipient);
-      expect(balAfter - balBefore).to.equal(CONTRIBUTION * 3n);
+      expect(balAfter - balBefore).to.equal(netPayout);
+
+      const feeBalAfter = await cUSD.balanceOf(feeRecipient);
+      expect(feeBalAfter - feeBalBefore).to.equal(fee);
     });
   });
 
@@ -233,14 +246,33 @@ describe("AjoClub", function () {
       expect(defaulted).to.have.lengthOf(1);
       expect(defaulted[0]).to.equal(carol.address);
 
-      // Now triggerPayout should work with reduced pot (2 members paid instead of 3)
+      // Now triggerPayout should work with slashed collateral pot cover (2 paid + 90% of carol's collateral)
       const recipient = alice.address; // round 0 → members[0] = alice
       const balBefore = await cUSD.balanceOf(recipient);
+      const feeRecipient = await ajoClub.feeRecipient();
+      const feeBalBefore = await cUSD.balanceOf(feeRecipient);
+
+      const paidPot = CONTRIBUTION * 2n; // 100 USDC
+      const slashedPotCover = (CONTRIBUTION * 9000n) / 10000n; // 45 USDC (90%)
+      const penalty = (CONTRIBUTION * 1000n) / 10000n; // 5 USDC (10%)
+      const roundPot = paidPot + slashedPotCover; // 145 USDC
+      const protocolFee = (roundPot * 100n) / 10000n; // 1.45 USDC (1%)
+      const netPayout = roundPot - protocolFee; // 143.55 USDC
+      const totalFees = protocolFee + penalty; // 6.45 USDC
+
       await expect(ajoClub.triggerPayout(clubId))
         .to.emit(ajoClub, "PayoutSent")
-        .withArgs(clubId, recipient, CONTRIBUTION * 2n, 0n); // 2 members paid
+        .withArgs(clubId, recipient, netPayout, 0n)
+        .to.emit(ajoClub, "CollateralSlashed")
+        .withArgs(clubId, carol.address, 0n, slashedPotCover, penalty)
+        .to.emit(ajoClub, "ProtocolFeeCollected")
+        .withArgs(clubId, totalFees);
+
       const balAfter = await cUSD.balanceOf(recipient);
-      expect(balAfter - balBefore).to.equal(CONTRIBUTION * 2n);
+      expect(balAfter - balBefore).to.equal(netPayout);
+
+      const feeBalAfter = await cUSD.balanceOf(feeRecipient);
+      expect(feeBalAfter - feeBalBefore).to.equal(totalFees);
     });
 
     it("member defaults but grace period hasn't passed — triggerPayout reverts", async () => {
@@ -277,14 +309,18 @@ describe("AjoClub", function () {
       await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
       await ethers.provider.send("evm_mine", []);
 
-      // triggerPayout should work with full pot
+      // triggerPayout should work with full pot minus 1% fee
       const recipient = alice.address; // round 0 → members[0] = alice
       const balBefore = await cUSD.balanceOf(recipient);
+      const grossPot = CONTRIBUTION * 3n;
+      const fee = (grossPot * 100n) / 10000n;
+      const netPayout = grossPot - fee;
+
       await expect(ajoClub.triggerPayout(clubId))
         .to.emit(ajoClub, "PayoutSent")
-        .withArgs(clubId, recipient, CONTRIBUTION * 3n, 0n); // 3 members paid
+        .withArgs(clubId, recipient, netPayout, 0n);
       const balAfter = await cUSD.balanceOf(recipient);
-      expect(balAfter - balBefore).to.equal(CONTRIBUTION * 3n);
+      expect(balAfter - balBefore).to.equal(netPayout);
     });
   });
 
@@ -400,10 +436,158 @@ describe("AjoClub", function () {
       expect(await ajoClub.isVerified(alice.address)).to.be.false;
     });
 
-    it("non-owner cannot verify members directly", async () => {
+    it("owner can update protocol fee within bounds", async () => {
+      expect(await ajoClub.protocolFeeBps()).to.equal(100n);
+
+      await expect(ajoClub.connect(owner).setProtocolFee(250))
+        .to.emit(ajoClub, "ProtocolFeeUpdated")
+        .withArgs(250n);
+
+      expect(await ajoClub.protocolFeeBps()).to.equal(250n);
+
+      await expect(ajoClub.connect(owner).setProtocolFee(501)).to.be.revertedWith(
+        "Fee cannot exceed 5%"
+      );
+    });
+
+    it("non-owner cannot update protocol fee", async () => {
       await expect(
-        ajoClub.connect(alice).setVerified(bob.address, true)
+        ajoClub.connect(alice).setProtocolFee(200)
       ).to.be.revertedWithCustomError(ajoClub, "OwnableUnauthorizedAccount");
+    });
+
+    it("owner can update fee recipient", async () => {
+      expect(await ajoClub.feeRecipient()).to.equal(owner.address);
+
+      await expect(ajoClub.connect(owner).setFeeRecipient(carol.address))
+        .to.emit(ajoClub, "FeeRecipientUpdated")
+        .withArgs(carol.address);
+
+      expect(await ajoClub.feeRecipient()).to.equal(carol.address);
+
+      await expect(
+        ajoClub.connect(owner).setFeeRecipient(ethers.ZeroAddress)
+      ).to.be.revertedWith("Invalid fee recipient");
+    });
+
+    it("non-owner cannot update fee recipient", async () => {
+      await expect(
+        ajoClub.connect(alice).setFeeRecipient(alice.address)
+      ).to.be.revertedWithCustomError(ajoClub, "OwnableUnauthorizedAccount");
+    });
+  });
+
+  describe("Collateral Deposit and Claiming", () => {
+    it("honest members can reclaim their collateral upon club completion", async () => {
+      const clubId = await setupOpenClub();
+      await verifyAndJoin(clubId, alice);
+      await verifyAndJoin(clubId, bob);
+      await verifyAndJoin(clubId, carol);
+      await ajoClub.connect(owner).startClub(clubId);
+
+      // Complete round 0
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+      await ajoClub.connect(carol).contribute(clubId);
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+      await ajoClub.triggerPayout(clubId);
+
+      // Complete round 1
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+      await ajoClub.connect(carol).contribute(clubId);
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+      await ajoClub.triggerPayout(clubId);
+
+      // Complete round 2
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+      await ajoClub.connect(carol).contribute(clubId);
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+      await ajoClub.triggerPayout(clubId);
+
+      // Verify club is complete
+      const club = await ajoClub.getClub(clubId);
+      expect(club.status).to.equal(2); // COMPLETE
+
+      // Alice reclaims her collateral
+      const aliceBalBefore = await cUSD.balanceOf(alice.address);
+      const tx = await ajoClub.connect(alice).claimCollateral(clubId);
+      await expect(tx)
+        .to.emit(ajoClub, "CollateralRefunded")
+        .withArgs(clubId, alice.address, CONTRIBUTION);
+
+      const aliceBalAfter = await cUSD.balanceOf(alice.address);
+      expect(aliceBalAfter - aliceBalBefore).to.equal(CONTRIBUTION);
+
+      // Trying to claim again reverts
+      await expect(
+        ajoClub.connect(alice).claimCollateral(clubId)
+      ).to.be.revertedWith("Collateral already claimed");
+    });
+
+    it("member cannot claim collateral while club is ACTIVE", async () => {
+      const clubId = await setupOpenClub();
+      await verifyAndJoin(clubId, alice);
+      await verifyAndJoin(clubId, bob);
+      await verifyAndJoin(clubId, carol);
+      await ajoClub.connect(owner).startClub(clubId);
+
+      await expect(
+        ajoClub.connect(alice).claimCollateral(clubId)
+      ).to.be.revertedWith("Club not complete");
+    });
+
+    it("slashed defaulter has no collateral left to claim", async () => {
+      const clubId = await setupOpenClub();
+      await verifyAndJoin(clubId, alice);
+      await verifyAndJoin(clubId, bob);
+      await verifyAndJoin(clubId, carol);
+      await ajoClub.connect(owner).startClub(clubId);
+
+      // Alice and Bob pay, Carol defaults
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+
+      // Pass cycleEnd + gracePeriod
+      await ethers.provider.send("evm_increaseTime", [CYCLE + GRACE_PERIOD + 1]);
+      await ethers.provider.send("evm_mine", []);
+
+      // Trigger payout, which slashes Carol's collateral
+      await ajoClub.triggerPayout(clubId);
+
+      // Verify Carol's collateral is now 0
+      const [carolCol, carolClaimed] = await ajoClub.getMemberCollateral(clubId, carol.address);
+      expect(carolCol).to.equal(0n);
+      expect(carolClaimed).to.be.false;
+
+      // Complete remaining rounds so club is COMPLETE
+      // Round 1 (Bob recipient): Alice and Carol pay, or Alice and Bob pay
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+      await ajoClub.connect(carol).contribute(clubId);
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+      await ajoClub.triggerPayout(clubId);
+
+      // Round 2 (Carol recipient)
+      await ajoClub.connect(alice).contribute(clubId);
+      await ajoClub.connect(bob).contribute(clubId);
+      await ajoClub.connect(carol).contribute(clubId);
+      await ethers.provider.send("evm_increaseTime", [CYCLE + 1]);
+      await ethers.provider.send("evm_mine", []);
+      await ajoClub.triggerPayout(clubId);
+
+      const club = await ajoClub.getClub(clubId);
+      expect(club.status).to.equal(2); // COMPLETE
+
+      // Carol tries to claim collateral, but it was slashed
+      await expect(
+        ajoClub.connect(carol).claimCollateral(clubId)
+      ).to.be.revertedWith("No collateral to claim");
     });
   });
 });
