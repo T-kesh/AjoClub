@@ -275,7 +275,15 @@ npm run bot
 > **Daemon Architecture & Cloud Deployment:**  
 > The Telegram bot and agent coordinator run as a **persistent background daemon** (grammY long-polling `bot.start()`, in-process Base Sepolia indexer, scheduled autonomous tick loop, and local SQLite database).  
 > Serverless platforms like **Vercel** cannot run long-polling daemons or background intervals because serverless function invocations terminate after ~10–15 seconds and have ephemeral, read-only filesystems.  
-> For production hosting, deploy the bot daemon to a persistent environment such as **Railway**, **Render**, **Fly.io**, **DigitalOcean App Platform**, or an **Ubuntu VPS (systemd / Docker / PM2)**.
+> 
+> ### 🚀 Free Render Deployment (Zero Credit Card)
+> AjoClub includes an embedded HTTP health-check server (`GET /health`) in [`bot/index.ts`](bot/index.ts) and a pre-configured [`render.yaml`](render.yaml) blueprint:
+> 1. In **[Render Dashboard](https://dashboard.render.com/)**, click **New + > Blueprint** and connect your AjoClub repository.
+> 2. Render automatically reads [`render.yaml`](render.yaml) and sets up the Free Web Service.
+> 3. Provide your secret keys in the Render web UI (`TELEGRAM_BOT_TOKEN`, `GEMINI_API_KEY`, `BASE_SEPOLIA_AGENT_KEY`).
+> 4. **Keep-Alive Ping (Prevent Hibernation):** Free Render web services spin down after 15 minutes of inactivity. To keep your bot listening 24/7, set up a free monitor on **[UptimeRobot](https://uptimerobot.com/)** or **[cron-job.org](https://cron-job.org/)** to send a `GET` request to `https://your-service.onrender.com/health` every 5–10 minutes.
+> 
+> *(For permanent Linux VM hosting with guaranteed disk persistence, see the Oracle Cloud Always Free migration plan in `future_plans/`).*
 
 ---
 

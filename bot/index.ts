@@ -70,9 +70,11 @@ export function createBot(): Bot | null {
 
 import { AjoClubIndexer } from "../indexer/index.js";
 import { AgentCoordinator } from "../agent/loop.js";
+import http from "http";
 
 let daemonIndexer: AjoClubIndexer | null = null;
 let daemonCoordinator: AgentCoordinator | null = null;
+let httpServer: http.Server | null = null;
 
 export function getDaemonIndexer(): AjoClubIndexer | null {
   return daemonIndexer;
@@ -82,7 +84,44 @@ export function getDaemonCoordinator(): AgentCoordinator | null {
   return daemonCoordinator;
 }
 
+export function startHealthServer(port: number | string = process.env.PORT || 3000): http.Server {
+  if (httpServer) return httpServer;
+
+  const server = http.createServer((req, res) => {
+    if (req.url === "/health" || req.url === "/" || req.url === "/ping") {
+      res.writeHead(200, {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+      });
+      res.end(
+        JSON.stringify({
+          status: "healthy",
+          service: "ajoclub-unified-daemon",
+          uptimeSeconds: Math.floor(process.uptime()),
+          bot: activeBot ? "running" : "offline",
+          indexer: daemonIndexer ? "running" : "idle",
+          coordinator: daemonCoordinator ? "running" : "idle",
+          timestamp: new Date().toISOString(),
+        })
+      );
+    } else {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("Not Found");
+    }
+  });
+
+  server.listen(port, () => {
+    console.log(`🌐 [HTTP] Keep-alive health check server listening on port ${port}`);
+  });
+
+  httpServer = server;
+  return server;
+}
+
 export async function startBot(): Promise<void> {
+  // 1. Immediately bind HTTP health check port (required for Render Web Service)
+  startHealthServer();
+
   const bot = createBot();
   if (!bot) {
     console.log("ℹ️ To activate live Telegram polling, add TELEGRAM_BOT_TOKEN to your .env file.");
@@ -93,7 +132,7 @@ export async function startBot(): Promise<void> {
   console.log("🤖 Starting AjoClub Unified Bot & Autonomous Daemon");
   console.log("==================================================");
 
-  // 1. Initialize and launch on-chain event indexer in-process
+  // 2. Initialize and launch on-chain event indexer in-process
   try {
     daemonIndexer = new AjoClubIndexer();
     await daemonIndexer.init();
@@ -103,12 +142,12 @@ export async function startBot(): Promise<void> {
     console.warn("⚠️ [DAEMON] Indexer initialization warning:", err.message);
   }
 
-  // 2. Initialize and start autonomous agent loop in-process
+  // 3. Initialize and start autonomous agent loop in-process
   daemonCoordinator = new AgentCoordinator();
   daemonCoordinator.startScheduledLoop(15000);
   console.log("⏰ [DAEMON] Autonomous agent tick loop started in-process (interval: 15s)");
 
-  // 3. Start Telegram Bot polling
+  // 4. Start Telegram Bot polling
   await bot.start({
     onStart: (info) => {
       console.log(`✅ [DAEMON] Bot @${info.username} is live and listening on Telegram!`);
