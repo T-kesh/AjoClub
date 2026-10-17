@@ -14,7 +14,7 @@ import { existsSync, readFileSync } from "fs";
 export const dynamic = "force-dynamic";
 
 const AJO_CLUB_ADDRESS = (process.env.NEXT_PUBLIC_AJO_CLUB_ADDRESS ||
-  "0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3") as `0x${string}`;
+  "0xaD5a169267f0FA9F1D59716F10973B6450853B95") as `0x${string}`;
 
 const RPC_URL = process.env.NEXT_PUBLIC_BASE_RPC || "https://sepolia.base.org";
 

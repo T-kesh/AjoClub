@@ -28,7 +28,7 @@ import { sendTelegramNotification } from "../bot/notifications.js";
 
 dotenv.config();
 
-export const DEPLOYMENT_BLOCK_BASE_SEPOLIA = 47469082n;
+export const DEPLOYMENT_BLOCK_BASE_SEPOLIA = 48212133n;
 const CHUNK_SIZE = 999n; // Base Sepolia public RPC limits eth_getLogs to 1,000 blocks
 const DEFAULT_POLL_INTERVAL_MS = 4000;
 
@@ -67,7 +67,7 @@ export class AjoClubIndexer {
 
   constructor(options: IndexerOptions = {}) {
     const envAddr = process.env.AJO_CLUB_CONTRACT_ADDRESS;
-    this.contractAddress = (options.contractAddress || envAddr || "0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3") as `0x${string}`;
+    this.contractAddress = (options.contractAddress || envAddr || "0xaD5a169267f0FA9F1D59716F10973B6450853B95") as `0x${string}`;
     this.startBlock = options.startBlock ?? DEPLOYMENT_BLOCK_BASE_SEPOLIA;
     this.pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
   }

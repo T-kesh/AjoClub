@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import { getVarsFilePath } from "hardhat/internal/util/global-dir";
 import { VarsManager } from "hardhat/internal/core/vars/vars-manager";
 
-const AJO_CLUB_ADDRESS = "0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3";
+const AJO_CLUB_ADDRESS = process.env.AJO_CLUB_CONTRACT_ADDRESS || "0xaD5a169267f0FA9F1D59716F10973B6450853B95";
 const BASE_SEPOLIA_USDC = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
 
 const ERC20_ABI = [

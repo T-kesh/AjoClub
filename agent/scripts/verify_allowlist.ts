@@ -2,7 +2,7 @@ import "dotenv/config";
 import { isContractTargetAllowed } from "../guardrails/allowlist.js";
 import assert from "node:assert/strict";
 
-const deployedAddress = "0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3";
+const deployedAddress = process.env.AJO_CLUB_CONTRACT_ADDRESS || "0xaD5a169267f0FA9F1D59716F10973B6450853B95";
 
 console.log("🔍 Checking allowlist against newly deployed AjoClub address...");
 console.log("Configured AJO_CLUB_CONTRACT_ADDRESS:", process.env.AJO_CLUB_CONTRACT_ADDRESS);

@@ -14,7 +14,7 @@ The smart contract enforces round-robin payouts and pot distribution without int
 
 | Component | Target / Value | Links |
 |:---|:---|:---|
-| **AjoClub Contract** | `0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3` | [Basescan (Verified)](https://sepolia.basescan.org/address/0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3#code) |
+| **AjoClub Contract** | `0xaD5a169267f0FA9F1D59716F10973B6450853B95` | [Basescan](https://sepolia.basescan.org/address/0xaD5a169267f0FA9F1D59716F10973B6450853B95) |
 | **Native USDC Token** | `0x036CbD53842c5426634e7929541eC2318f3dCF7e` | [Basescan USDC](https://sepolia.basescan.org/address/0x036CbD53842c5426634e7929541eC2318f3dCF7e) |
 | **Agent Signer Wallet** | `0xBdE64B467969fC491674EE69f5C8cEA43fecA744` | [Basescan Address](https://sepolia.basescan.org/address/0xBdE64B467969fC491674EE69f5C8cEA43fecA744) |
 | **Telegram Coordinator** | `@Ajoclub_bot` | [Open in Telegram](https://t.me/Ajoclub_bot) |
@@ -233,7 +233,7 @@ GEMINI_API_KEY="your_gemini_api_key"
 # Base Network & Contract
 BASE_CHAIN_ID=84532
 BASE_SEPOLIA_RPC_URL="https://sepolia.base.org"
-AJO_CLUB_CONTRACT_ADDRESS="0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3"
+AJO_CLUB_CONTRACT_ADDRESS="0xaD5a169267f0FA9F1D59716F10973B6450853B95"
 USDC_TOKEN_ADDRESS="0x036CbD53842c5426634e7929541eC2318f3dCF7e"
 
 # Database
@@ -316,7 +316,7 @@ cd web
 
 # Set your environment variables in .env.local
 NEXT_PUBLIC_CHAIN_ID=84532
-NEXT_PUBLIC_AJO_CLUB_ADDRESS=0x872F30f5b2FacC992ebaC9392Ef64020d5b774b3
+NEXT_PUBLIC_AJO_CLUB_ADDRESS=0xaD5a169267f0FA9F1D59716F10973B6450853B95
 NEXT_PUBLIC_BASE_RPC=https://sepolia.base.org
 NEXT_PUBLIC_CDP_API_KEY=your_cdp_api_key
 

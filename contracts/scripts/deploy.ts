@@ -90,6 +90,10 @@ async function main() {
   const owner = await ajoClub.owner();
 
   console.log("Owner:               ", owner);
+  const feeRecipient = await ajoClub.feeRecipient();
+  const feeBps = await ajoClub.protocolFeeBps();
+  console.log("Fee Recipient:       ", feeRecipient);
+  console.log("Protocol Fee Bps:    ", feeBps.toString(), `(${Number(feeBps) / 100}%)`);
   console.log("Initial Club Count:  ", initialClubCount.toString());
   console.log(`USDC (${BASE_SEPOLIA_USDC}) Allowed:`, usdcAllowed);
 
